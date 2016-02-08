@@ -1,7 +1,6 @@
 /* eslint-disable handle-callback-err */
 'use strict';
 var Boom = require('boom');
-var _ = require('lodash');
 var github = require('../services/github');
 var config = require('../config');
 
@@ -95,7 +94,7 @@ module.exports = {
 
   entriesSingleUpdate: {
     handler: (request, reply) => {
-      let branch = `${request.payload.dataset}-${request.payload.entry}-update-${Date.now()}`
+      let branch = `${request.payload.dataset}-${request.payload.entry}-update-${Date.now()}`;
       Promise.all([
         github.getContent(`data/${request.params.datasetId}/${request.params.entryId}.json`),
         github.createBranch(branch, request.payload.meta.masterSHA)
@@ -104,6 +103,7 @@ module.exports = {
           var entryContent = JSON.parse((new Buffer(data[0].content, 'base64')).toString());
 
           entryContent.results = request.payload.data;
+          entryContent.meta.date = Date.now();
 
           return github.updateFile(
             `data/${request.params.datasetId}/${request.params.entryId}.json`,
@@ -117,22 +117,22 @@ module.exports = {
             .then(data => {
               return github.createPR(`Data update from ${request.payload.author.name}`, branch)
                 .then(data => {
-                  reply('done')
+                  reply({
+                    statusCode: 200,
+                    message: 'Pull request successfully created.'
+                  });
                 })
                 .catch((err) => {
-                  throw err;
                   console.log('err', err);
                   reply(Boom.badImplementation());
                 });
             })
               .catch((err) => {
-                throw err;
                 console.log('err', err);
                 reply(Boom.badImplementation());
               });
         })
         .catch((err) => {
-          throw err;
           console.log('err', err);
           reply(Boom.badImplementation());
         });

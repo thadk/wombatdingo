@@ -72,21 +72,16 @@ module.exports = {
             return reply(Boom.badImplementation('Resources were not valid JSON. ' + e.message));
           }
 
-          let prepQuestions = datasetContent.data.map(o => {
-            let answer = _.get(enrtyContent.results, o.id, '');
-            o.default = answer;
-            return o;
-          });
-
           let res = {
             dataset: request.params.datasetId,
             entry: request.params.entryId,
             meta: {
               masterSHA: sha,
               entrySHA: entry.sha,
-              datasetSchemaVersion: datasetContent.meta.version
+              datasetSchemaVersion: datasetContent.version
             },
-            data: prepQuestions
+            schema: datasetContent,
+            data: enrtyContent.results
           };
 
           reply(res);

@@ -1,10 +1,10 @@
 'use strict';
-var datatsets = require('../controllers/datasets');
+var forms = require('../controllers/forms');
 
 module.exports = [
-  { method: 'GET', path: '/datasets', config: datatsets.list },
-  { method: 'GET', path: '/datasets/{datasetId}', config: datatsets.single },
-  { method: 'GET', path: '/datasets/{datasetId}/entries', config: datatsets.entries },
-  { method: 'GET', path: '/datasets/{datasetId}/entries/{entryId}', config: datatsets.entriesSingle },
-  { method: 'PUT', path: '/datasets/{datasetId}/entries/{entryId}', config: datatsets.entriesSingleUpdate }
+  { method: 'GET', path: '/forms', config: forms.list },
+  { method: 'GET', path: '/forms/{formId}', config: forms.single },
+  { method: 'GET', path: '/forms/{formId}/entries', config: forms.entries },
+  { method: 'GET', path: '/forms/{formId}/entries/{entryId}', config: forms.entriesSingle },
+  { method: 'PUT', path: '/forms/{formId}/entries/{entryId}', config: forms.entriesSingleUpdate }
 ];

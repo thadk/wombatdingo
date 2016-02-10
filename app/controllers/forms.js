@@ -35,7 +35,6 @@ module.exports = {
     handler: (request, reply) => {
       github.getContent(`data/${request.params.formId}`)
         .then((data) => {
-          console.log('x-ratelimit-remaining', data.meta['x-ratelimit-remaining']);
           let entries = data.map((o) => { return {name: o.name.replace('.json', '')}; });
           reply({
             form: request.params.formId,
@@ -62,17 +61,18 @@ module.exports = {
           let entry = data[2];
 
           let formContent = (new Buffer(form.content, 'base64')).toString();
-          let enrtyContent = (new Buffer(entry.content, 'base64')).toString();
+          let entryContent = (new Buffer(entry.content, 'base64')).toString();
 
           try {
             formContent = JSON.parse(formContent);
-            enrtyContent = JSON.parse(enrtyContent);
+            entryContent = JSON.parse(entryContent);
           } catch (e) {
             return reply(Boom.badImplementation('Resources were not valid JSON. ' + e.message));
           }
 
           let res = {
             form: request.params.formId,
+            title: entryContent.title,
             entry: request.params.entryId,
             meta: {
               masterSHA: sha,
@@ -80,7 +80,7 @@ module.exports = {
               formSchemaVersion: formContent.version
             },
             schema: formContent,
-            data: enrtyContent.results
+            data: entryContent.results
           };
 
           reply(res);

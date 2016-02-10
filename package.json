@@ -11,6 +11,7 @@
   "author": "Development Seed <dev@developmentseed.org> (https://developmentseed.org)",
   "license": "MIT",
   "dependencies": {
+    "boom": "^3.1.1",
     "github": "^0.2.4",
     "good": "^6.4.0",
     "good-console": "^5.3.0",

@@ -7,11 +7,11 @@ var config = require('../config');
 module.exports = {
   list: {
     handler: (request, reply) => {
-      github.getContent('datasets')
+      github.getContent('forms')
         .then((data) => {
-          let datasets = data.map((o) => { return {name: o.name.replace('.json', '')}; });
+          let forms = data.map((o) => { return {name: o.name.replace('.json', '')}; });
           reply({
-            datasets
+            forms
           });
         })
         .catch((err) => {
@@ -24,21 +24,21 @@ module.exports = {
   single: {
     handler: (request, reply) => {
       reply({
-        dataset: request.params.datasetId,
+        form: request.params.formId,
         message: 'This is not the page you are looking for...',
-        entries_url: `${config.connection.host}:${config.connection.port}/datasets/${request.params.datasetId}/entries`
+        entries_url: `${config.connection.host}:${config.connection.port}/forms/${request.params.formId}/entries`
       });
     }
   },
 
   entries: {
     handler: (request, reply) => {
-      github.getContent(`data/${request.params.datasetId}`)
+      github.getContent(`data/${request.params.formId}`)
         .then((data) => {
           console.log('x-ratelimit-remaining', data.meta['x-ratelimit-remaining']);
           let entries = data.map((o) => { return {name: o.name.replace('.json', '')}; });
           reply({
-            dataset: request.params.datasetId,
+            form: request.params.formId,
             entries
           });
         })
@@ -53,33 +53,33 @@ module.exports = {
     handler: (request, reply) => {
       Promise.all([
         github.getMasterSHA(),
-        github.getContent(`datasets/${request.params.datasetId}.json`),
-        github.getContent(`data/${request.params.datasetId}/${request.params.entryId}.json`)
+        github.getContent(`forms/${request.params.formId}.json`),
+        github.getContent(`data/${request.params.formId}/${request.params.entryId}.json`)
       ])
         .then((data) => {
           let sha = data[0];
-          let dataset = data[1];
+          let form = data[1];
           let entry = data[2];
 
-          let datasetContent = (new Buffer(dataset.content, 'base64')).toString();
+          let formContent = (new Buffer(form.content, 'base64')).toString();
           let enrtyContent = (new Buffer(entry.content, 'base64')).toString();
 
           try {
-            datasetContent = JSON.parse(datasetContent);
+            formContent = JSON.parse(formContent);
             enrtyContent = JSON.parse(enrtyContent);
           } catch (e) {
             return reply(Boom.badImplementation('Resources were not valid JSON. ' + e.message));
           }
 
           let res = {
-            dataset: request.params.datasetId,
+            form: request.params.formId,
             entry: request.params.entryId,
             meta: {
               masterSHA: sha,
               entrySHA: entry.sha,
-              datasetSchemaVersion: datasetContent.version
+              formSchemaVersion: formContent.version
             },
-            schema: datasetContent,
+            schema: formContent,
             data: enrtyContent.results
           };
 
@@ -94,9 +94,9 @@ module.exports = {
 
   entriesSingleUpdate: {
     handler: (request, reply) => {
-      let branch = `${request.payload.dataset}-${request.payload.entry}-update-${Date.now()}`;
+      let branch = `${request.payload.form}-${request.payload.entry}-update-${Date.now()}`;
       Promise.all([
-        github.getContent(`data/${request.params.datasetId}/${request.params.entryId}.json`),
+        github.getContent(`data/${request.params.formId}/${request.params.entryId}.json`),
         github.createBranch(branch, request.payload.meta.masterSHA)
       ])
         .then(data => {
@@ -106,7 +106,7 @@ module.exports = {
           entryContent.meta.date = Date.now();
 
           return github.updateFile(
-            `data/${request.params.datasetId}/${request.params.entryId}.json`,
+            `data/${request.params.formId}/${request.params.entryId}.json`,
             JSON.stringify(entryContent, null, '  '),
             request.payload.meta.entrySHA,
             branch,
@@ -145,12 +145,12 @@ module.exports = {
 //     "name": "devseedgit",
 //     "email": "dev@developmentseed.org"
 //   },
-//   "dataset": "countries",
+//   "form": "countries",
 //   "entry": "co",
 //   "meta": {
 //     "masterSHA": "521f9eb7134a435479dec8fa7baac06438e8f910",
 //     "entrySHA": "e124aa23b5be3197875f7c6bffdcb8dce25db721",
-//     "datasetSchemaVersion": "1.0.0"
+//     "formSchemaVersion": "1.0.0"
 //   },
 //   "data": {
 //       "notable_laws": "colombiacompra.gov.co Discloses a lot of data and documents - is not yet open data, is not yet eprocurement; Decree 1510 dated July 17, 2012 – available at http://www.colombiacompra.gov.co/es/decreto-1510-de-2013-, starts the modernization of the public purchasing and procurement legal system ; adopted the United Nations Standard Products and Services Code® (UNSPSC®) by means of Decree 1510 of 2013 to facilitate communications among the participants in public procurement and enable a quicker analysis of the information, as well as the standard Annual Purchase Plan ; Tranpsarency and Acess to information act (with implementing decree)",

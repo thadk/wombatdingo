@@ -8,6 +8,6 @@ module.exports = {
     port: 3000
   },
   ghToken: null,
-  ghUser: 'danielfdsilva',
+  ghUser: 'olafveerman',
   ghRepo: 'vigilant-octo-succotash'
 };

@@ -41,21 +41,25 @@ var MapWidget = React.createClass({
     var map = L.map('ocp-map__map').setView([51.505, -0.09], 1);
     L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
     .addTo(map);
-    var countries = L.geoJson(this.state.countries).addTo(map);
 
-    countries
-      .on('mousemove', function (o) {
-        console.log(o.layer);
-        var feature = o.layer.feature;
-        var featureProps = feature.properties;
-        if (featureProps) {
-          component.setState({countryName: featureProps.admin});
-        } else {
+    var layer = L.geoJson(this.state.countries, {
+      style: function (feature) {
+        return feature.properties.style;
+      },
+      onEachFeature: function (feature, layer) {
+        layer.on('mousemove', function (e) {
+          var layerId = layer.feature.properties.iso_a2;
+          if (layerId) {
+            component.setState({countryName: layerId});
+          } else {
+            component.setState({countryName: ''});
+          }
+        }).on('mouseout', function (o) {
           component.setState({countryName: ''});
-        }
-      }).on('mouseout', function (o) {
-        component.setState({countryName: ''});
-      });
+        });
+      }
+    });
+    layer.addTo(map);
   },
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {

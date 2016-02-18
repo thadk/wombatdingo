@@ -78,3 +78,7 @@
 
 @import "utils";
 @import "leaflet";
+
+/* Map overwrites leaflet */
+
+@import "map";

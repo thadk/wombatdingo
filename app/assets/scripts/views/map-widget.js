@@ -11,7 +11,8 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       countries: {},
-      countryName: ''
+      countryAbrv: '',
+      layerStyle: {}
     };
   },
 
@@ -39,26 +40,49 @@ var MapWidget = React.createClass({
   setupMap: function () {
     var component = this;
     var map = L.map('ocp-map__map').setView([51.505, -0.09], 1);
-    L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
-    .addTo(map);
+    // L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
+    // .addTo(map);
+
+    var lyrStyleActive = {
+      color: '#C2C2C2',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#F4F4F4'
+    };
+    var lyrStyleInactive = {
+      color: '#C2C2C2',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#F4F4F4'
+    };
+    var lyrStyleHover = {
+      color: '#C2C2C2',
+      fillColor: '#C6D91A'
+    };
+
+    function onEachFeature (feature, layer) {
+      layer.setStyle(lyrStyleActive);
+      layer.on('mousemove', function (e) {
+        var layerId = layer.feature.properties.iso_a2;
+        if (layerId) {
+          layer.setStyle(lyrStyleHover);
+          component.setState({countryAbrv: layerId});
+        } else {
+          layer.setStyle(lyrStyleActive);
+          component.setState({countryAbrv: ''});
+        }
+      }).on('mouseout', function (e) {
+        layer.setStyle(lyrStyleActive);
+        component.setState({countryAbrv: ''});
+      });
+    }
 
     var layer = L.geoJson(this.state.countries, {
-      style: function (feature) {
-        return feature.properties.style;
-      },
-      onEachFeature: function (feature, layer) {
-        layer.on('mousemove', function (e) {
-          var layerId = layer.feature.properties.iso_a2;
-          if (layerId) {
-            component.setState({countryName: layerId});
-          } else {
-            component.setState({countryName: ''});
-          }
-        }).on('mouseout', function (o) {
-          component.setState({countryName: ''});
-        });
-      }
+      onEachFeature: onEachFeature
     });
+
     layer.addTo(map);
   },
   render: function () {
@@ -91,7 +115,7 @@ var MapWidget = React.createClass({
                id='ocp-map__map'>
           </div>
           <div className='ocp-map__content'>
-            <h2>{this.state.countryName}</h2>
+            <h2>{this.state.countryAbrv}</h2>
           </div>
         </div>
       </section>

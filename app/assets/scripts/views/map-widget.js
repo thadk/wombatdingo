@@ -1,5 +1,6 @@
 'use strict';
 import React from 'react';
+import fetch from 'isomorphic-fetch';
 import L from 'leaflet';
 
 var MapWidget = React.createClass({
@@ -10,7 +11,7 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       countries: {},
-      map: {}
+      countryName: ''
     };
   },
 
@@ -36,16 +37,25 @@ var MapWidget = React.createClass({
     }, 1000);
   },
   setupMap: function () {
-    console.log(this.state.countries);
-    var map = L.map('ocp-map__map', {minZoom: 2});
-    L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.'
-    ).addTo(map);
-    var countries = L.geoJson(this.state.countries);
-    countries.addTo(map);
+    var component = this;
+    var map = L.map('ocp-map__map').setView([51.505, -0.09], 1);
+    L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
+    .addTo(map);
+    var countries = L.geoJson(this.state.countries).addTo(map);
 
-    this.setState({
-      map: map
-    });
+    countries
+      .on('mousemove', function (o) {
+        console.log(o.layer);
+        var feature = o.layer.feature;
+        var featureProps = feature.properties;
+        if (featureProps) {
+          component.setState({countryName: featureProps.admin});
+        } else {
+          component.setState({countryName: ''});
+        }
+      }).on('mouseout', function (o) {
+        component.setState({countryName: ''});
+      });
   },
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {
@@ -77,7 +87,7 @@ var MapWidget = React.createClass({
                id='ocp-map__map'>
           </div>
           <div className='ocp-map__content'>
-            <h2>Country name</h2>
+            <h2>{this.state.countryName}</h2>
           </div>
         </div>
       </section>

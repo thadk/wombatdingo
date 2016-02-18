@@ -43,8 +43,13 @@ var TableWidget = React.createClass({
     return (
       <thead>
         <tr>
-          <th><a href=''>Country</a></th>
-          <th><a href=''>Population</a></th>
+          <th><a href='' className='sort sort--asc'>Country</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
+          <th><a href='' className='sort sort--none'>Population</a></th>
         </tr>
       </thead>
     );
@@ -56,9 +61,19 @@ var TableWidget = React.createClass({
         <tr>
           <td>Portugal</td>
           <td>10M</td>
+          <td></td>
+          <td>10M</td>
+          <td></td>
+          <td></td>
+          <td>10M</td>
         </tr>
         <tr>
           <td>Spain</td>
+          <td>10M</td>
+          <td>10M</td>
+          <td></td>
+          <td>10M</td>
+          <td></td>
           <td></td>
         </tr>
       </tbody>

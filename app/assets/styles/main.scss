@@ -14,6 +14,12 @@
 
 /* Libraries
    ========================================================================== */
+/**
+ * Using Leaflet for slippy map:
+ * http://leafletjs.com/
+ */
+
+@import "leaflet";
 
 /**
  * Using Bourbon for extended SASS functionality:
@@ -77,8 +83,3 @@
 /* Utilities */
 
 @import "utils";
-@import "leaflet";
-
-/* Map overwrites leaflet */
-
-@import "map";

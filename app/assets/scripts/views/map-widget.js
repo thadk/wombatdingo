@@ -2,6 +2,7 @@
 import React from 'react';
 import fetch from 'isomorphic-fetch';
 import L from 'leaflet';
+var countryGeom = require('../../data/countries.json');
 
 var MapWidget = React.createClass({
   displayName: 'MapWidget',
@@ -10,7 +11,8 @@ var MapWidget = React.createClass({
     return {
       fetchedData: false,
       fetchingData: false,
-      countries: {},
+      countryGeom: countryGeom,
+      countryData: {},
       countryAbrv: '',
       layerStyle: {}
     };
@@ -19,29 +21,28 @@ var MapWidget = React.createClass({
   componentDidMount: function () {
     this.setState({fetchingData: true});
     // Network request.
-    setTimeout(() => {
-      let component = this;
-      fetch('https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson')
-      .then(function (response) {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
-      })
-      .then(function (countries) {
-        if (component.isMounted()) {
-          component.setState({fetchingData: false, fetchedData: true});
-          component.setState({countries: countries});
-          component.setupMap();
-        }
-      });
-    }, 1000);
+    let component = this;
+    fetch('https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/all.json')
+    .then(function (response) {
+      if (response.status >= 400) {
+        throw new Error('Bad response');
+      }
+      return response.json();
+    })
+    .then(function (countryData) {
+      if (component.isMounted()) {
+        component.setState({
+          fetchingData: false,
+          fetchedData: true,
+          countryData: countryData
+        });
+        component.setupMap();
+      }
+    });
   },
   setupMap: function () {
     var component = this;
     var map = L.map('ocp-map__map').setView([51.505, -0.09], 1);
-    // L.tileLayer('http://api.tiles.mapbox.com/v4/mapbox.light/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
-    // .addTo(map);
 
     var lyrStyleActive = {
       color: '#C2C2C2',
@@ -79,7 +80,7 @@ var MapWidget = React.createClass({
       });
     }
 
-    var layer = L.geoJson(this.state.countries, {
+    var layer = L.geoJson(this.state.countryGeom, {
       onEachFeature: onEachFeature
     });
 

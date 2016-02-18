@@ -1,0 +1,29 @@
+/* ==========================================================================
+   Widget Table
+   ========================================================================== */
+
+.ocp-map {
+  &__body {
+    position: relative;
+  }
+
+  &__map {
+    background-color: #ddd;
+    min-height: 300px;
+  }
+
+  &__content {
+    background-color: #fff;
+    padding: 1rem;
+    width: 33.333%;
+    min-width: 20rem;
+    position: absolute;
+    right: 0;
+    top: 1rem;
+
+    h2 {
+      @extend .heading--small;
+      color: $primary-color;
+    }
+  }
+}

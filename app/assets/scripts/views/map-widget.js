@@ -22,25 +22,36 @@ var MapWidget = React.createClass({
   componentDidMount: function () {
     this.setState({fetchingData: true});
     // Network request.
-    let component = this;
     fetch(countryDataUrl)
-    .then(function (response) {
+    .then(response => {
       if (response.status >= 400) {
         throw new Error('Bad response');
       }
       return response.json();
     })
-    .then(function (countryData) {
-      if (component.isMounted()) {
-        component.setState({
-          fetchingData: false,
-          fetchedData: true,
-          countryData: countryData
-        });
-        component.setupMap();
-      }
+    .then(countryData => {
+      this.setState({
+        fetchingData: false,
+        fetchedData: true,
+        countryData: countryData
+      });
+      this.setupMap();
     });
   },
+
+  onMouseMove: function (layer, activeStyle, hoverStyle, countryName, countryData) {
+    layer.on('mousemove', e => {
+      layer.setStyle(hoverStyle);
+      this.setState({
+        activeCountryName: countryName,
+        activeCountryData: countryData
+      });
+    })
+    .on('mouseout', e => {
+      layer.setStyle(activeStyle);
+    });
+  },
+
   onEachFeature: function (feature, layer) {
     var lyrStyleActive = {
       color: '#C2C2C2',
@@ -75,63 +86,32 @@ var MapWidget = React.createClass({
       fillColor: '#868586'
     };
 
-    function onMouseMove (
-      component,
-      layer,
-      activeStyle,
-      hoverStyle,
-      countryName,
-      countryData) {
-      layer.on('mousemove', function (e) {
-        layer.setStyle(hoverStyle);
-        component.setState({
-          activeCountryName: countryName,
-          activeCountryData: countryData
-        });
-      })
-      .on('mouseout', function (e) {
-        layer.setStyle(activeStyle);
-      });
-    }
-
     var component = this;
     var layerId = layer.feature.properties.iso_a2.toLowerCase();
     var countryData = component.state.countryData;
     var thisCountryData = R.filter(R.propEq('iso', layerId), countryData)[0];
+
     if (thisCountryData && thisCountryData.results.ocds_description) {
       layer.setStyle(lyrStyleActive);
-      onMouseMove(
-        component,
-        layer,
-        lyrStyleActive,
-        lyrStyleActiveHover,
-        thisCountryData.name,
-        thisCountryData
-      );
+      this.onMouseMove(layer, lyrStyleActive, lyrStyleActiveHover, thisCountryData.name, thisCountryData);
     } else if (thisCountryData) {
       layer.setStyle(lyrStyleInactive);
-      onMouseMove(
-      component,
-      layer,
-      lyrStyleInactive,
-      lyrStyleInactiveHover,
-      thisCountryData.name,
-      {}
-    );
+      this.onMouseMove(layer, lyrStyleInactive, lyrStyleInactiveHover, thisCountryData.name, {});
     } else {
       layer.setStyle(lyrStyleBlank);
     }
   },
+
   setupMap: function () {
-    var component = this;
-    var map = L.map('ocp-map__map').setView([51.505, -0.09], 1);
+    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 1);
     L.geoJson(countryGeom, {
-      onEachFeature: component.onEachFeature
+      onEachFeature: this.onEachFeature
     }).addTo(map);
     /* label layer (not working) */
     // L.tileLayer('https://api.mapbox.com/v4/mapbox.ex50cnmi/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
     // .addTo(map);
   },
+
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {
       return null;
@@ -165,9 +145,7 @@ var MapWidget = React.createClass({
           </div>
         </header>
         <div className='ocp-map__body'>
-          <div className='ocp-map__map'
-               id='ocp-map__map'>
-          </div>
+          <div className='ocp-map__map' ref='mapHolder'>{/* Map renders here */}</div>
           <div className='ocp-map__content'>
             <h2>{this.state.activeCountryName}</h2>
             <p>{activeCountryData}</p>

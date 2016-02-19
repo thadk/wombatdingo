@@ -8,8 +8,7 @@
   }
 
   &__map {
-    background-color: #ddd;
-    min-height: 300px;
+    min-height: 500px;
   }
 
   &__content {
@@ -24,6 +23,38 @@
     h2 {
       @extend .heading--small;
       color: $primary-color;
+    }
+  }
+
+  &__actions {
+    background-color: $base-color;
+    padding: 1rem;
+    color: #fff;
+    text-transform: uppercase;
+
+    &-description {
+      margin-right: 1rem;
+    }
+
+    .drop__menu {
+      width: 20rem;
+    }
+  }
+
+  .ocp-map-details {
+    margin: 0;
+
+    dd {
+      font-weight: $base-font-bold;
+      margin: 0;
+    }
+    dt {
+      text-transform: none;
+      margin-bottom: 1rem;
+
+      &:last-child {
+        margin: 0;
+      }
     }
   }
 }

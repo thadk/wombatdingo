@@ -22,6 +22,59 @@ var MapWidget = React.createClass({
 
   mapCountryLayer: null,
 
+  layerStyles: {
+    default: {
+      color: '#959595',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#B5B5B5'
+    },
+    nodata: {
+      color: '#E3E3E3',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#F4F4F4'
+    },
+    hover: {
+      color: '#C2DC16',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 0.5,
+      fillColor: '#C2DC16'
+    },
+    active: {
+      color: '#C2DC16',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#C2DC16'
+    },
+
+    green: {
+      color: '#27ae60',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#27ae60'
+    },
+    yellow: {
+      color: '#f39c12',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#f1c40f'
+    },
+    orange: {
+      color: '#d35400',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#e67e22'
+    }
+  },
+
   getInitialState: function () {
     return {
       fetchedData: false,
@@ -52,91 +105,89 @@ var MapWidget = React.createClass({
     });
   },
 
+  componentDidUpdate: function () {
+    if (this.mapCountryLayer) {
+      this.setCountriesStyle();
+    }
+  },
+
   viewFilterClickHandler: function (key, e) {
     e.preventDefault();
     this.setState({ viewFilter: key });
   },
 
-  // onMouseMove: function (layer, activeStyle, hoverStyle, countryName, countryData) {
-  //   layer.on('mousemove', e => {
-  //     layer.setStyle(hoverStyle);
-  //     this.setState({
-  //       activeCountryName: countryName,
-  //       activeCountryData: countryData
-  //     });
-  //   })
-  //   .on('mouseout', e => {
-  //     layer.setStyle(activeStyle);
-  //   });
-  // },
+  setCountriesStyle: function () {
+    this.mapCountryLayer.eachLayer(this.setCountryStyle);
+  },
+
+  setCountryStyle: function (layer) {
+    // Invalid.
+    if (layer.feature.properties.isInvalid) {
+      layer.setStyle(this.layerStyles.nodata);
+      return;
+    }
+
+    // Active layer.
+    if (layer.feature.properties.iso_a2 === _.get(this.state.activeCountryProperties, 'iso_a2', '')) {
+      layer.setStyle(this.layerStyles.active);
+      return;
+    }
+
+    // Default style.
+    layer.setStyle(this.layerStyles.default);
+
+    switch (this.state.viewFilter) {
+      case 'ocds':
+        if (layer.feature.properties.ocds_ongoing_data) {
+          layer.setStyle(this.layerStyles.green);
+        } else if (layer.feature.properties.ocds_historic_data) {
+          layer.setStyle(this.layerStyles.yellow);
+        } else if (layer.feature.properties.ocds_implementation) {
+          layer.setStyle(this.layerStyles.orange);
+        }
+        break;
+      case 'commitments':
+        if (layer.feature.properties.ogp_commitments && layer.feature.properties.ogp_commitments.length) {
+          layer.setStyle(this.layerStyles.green);
+        }
+        break;
+      case 'contracts':
+        if (layer.feature.properties.innovations && layer.feature.properties.innovations.length) {
+          layer.setStyle(this.layerStyles.green);
+        }
+        break;
+    }
+  },
 
   onEachFeature: function (feature, layer) {
-    var lyrStyleActive = {
-      color: '#C2C2C2',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#F4F4F4'
-    };
-    var lyrStyleActiveHover = {
-      color: '#C2C2C2',
-      fillColor: '#C6D91A'
-    };
-    var lyrStyleInactive = {
-      color: '#C2C2C2',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#B5B5B5'
-    };
-    var lyrStyleInactiveHover = {
-      color: '#C2C2C2',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#A1A1A1'
-    };
-    var lyrStyleBlank = {
-      color: '#000',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#868586'
-    };
+    layer.feature.properties.isInvalid = Object.keys(layer.feature.properties).length === 3;
+    this.setCountryStyle(layer);
 
-    // var component = this;
-    // var layerId = layer.feature.properties.iso_a2.toLowerCase();
-    // var countryData = component.state.countryData;
-    // var thisCountryData = R.filter(R.propEq('iso', layerId), countryData)[0];
-
-    // if (thisCountryData && thisCountryData.results.ocds_description) {
-    //   layer.setStyle(lyrStyleActive);
-    //   this.onMouseMove(layer, lyrStyleActive, lyrStyleActiveHover, thisCountryData.name, thisCountryData);
-    // } else if (thisCountryData) {
-    //   layer.setStyle(lyrStyleInactive);
-    //   this.onMouseMove(layer, lyrStyleInactive, lyrStyleInactiveHover, thisCountryData.name, {});
-    // } else {
-    //   layer.setStyle(lyrStyleBlank);
-    // }
     layer
-      .setStyle(lyrStyleInactive)
       .on('click', e => {
-        this.mapCountryLayer.setStyle(lyrStyleInactive);
-        e.target.setStyle(lyrStyleActiveHover);
+        if (layer.feature.properties.isInvalid) {
+          return;
+        }
         this.setState({
           activeCountryProperties: e.target.feature.properties
         });
       })
       .on('mousemove', e => {
+        if (layer.feature.properties.isInvalid) {
+          return;
+        }
         // Don't act on the selected layer.
         if (e.target.feature.properties.iso_a2 !== _.get(this.state.activeCountryProperties, 'iso_a2', '')) {
-          e.target.setStyle(lyrStyleActive);
+          e.target.setStyle(this.layerStyles.hover);
         }
       })
       .on('mouseout', e => {
+        if (layer.feature.properties.isInvalid) {
+          return;
+        }
         // Don't act on the selected layer.
         if (e.target.feature.properties.iso_a2 !== _.get(this.state.activeCountryProperties, 'iso_a2', '')) {
-          e.target.setStyle(lyrStyleInactive);
+          this.setCountryStyle(e.target);
         }
       });
   },
@@ -156,12 +207,6 @@ var MapWidget = React.createClass({
       return null;
     }
 
-    // var activeCountryData = this.state.activeCountryData;
-    // if (Object.keys(activeCountryData).length) {
-    //   activeCountryData = JSON.stringify(activeCountryData);
-    // } else {
-    //   activeCountryData = 'No Data';
-    // }
     let country = this.state.activeCountryProperties;
 
     return (

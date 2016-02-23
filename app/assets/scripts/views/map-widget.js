@@ -15,6 +15,12 @@ const viewFilterMatrix = {
   contracts: 'Publishing contracts'
 };
 
+const ocdsMatrix = {
+  ocds_implementation: 'In implementation',
+  ocds_historic_data: 'Historic data',
+  ocds_ongoing_data: 'Ongoing data'
+};
+
 var MapWidget = React.createClass({
   displayName: 'MapWidget',
 
@@ -206,6 +212,7 @@ var MapWidget = React.createClass({
     }
 
     let country = this.state.activeCountryProperties;
+    console.log(country);
 
     return (
       <section className='ocp-map'>
@@ -238,12 +245,30 @@ var MapWidget = React.createClass({
           {country !== null ? (
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
-            <dl className='ocp-map-details'>
-              <dd>The label</dd>
-              <dt>The value, probably "No"</dt>
-              <dd>The label</dd>
-              <dt>The value, probably "No"</dt>
-            </dl>
+            <h3>OCDS</h3>
+            <ul>
+              {_.map(ocdsMatrix, (o, i) => {
+                return (
+                  <li key={i}
+                    className={classnames('ocds-item', {'ocds-item--active': country[i]})}
+                    >{o}</li>
+                );
+              })}
+            </ul>
+            {country.ocds_description ? <p>{country.ocds_description}</p> : null }
+            <h3>Relevant OGP commitment</h3>
+            {country.ogp_commitments.length ? (
+              <ol>
+              {_.map(country.ogp_commitments, (o, i) => {
+                return (
+                  <li key={i}>
+                    {o.ogp_commitment}
+                    {o.ogp_commitment_link ? <a href={o.ogp_commitment_link} target='_blank'></a> : ''}
+                  </li>
+                );
+              })}
+              </ol>) : <p className='no-results'>No relevant commitment</p>}
+            <p><a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank'>Improve this data</a></p>
           </div>
           ) : null}
         </div>

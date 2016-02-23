@@ -22,7 +22,7 @@ var TableWidget = React.createClass({
   componentDidMount: function () {
     this.setState({fetchingData: true});
     // Network request.
-    fetch('https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/table.json')
+    fetch('https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_table.json')
       .then(response => response.json())
       .then(response => {
         console.log('response', response);

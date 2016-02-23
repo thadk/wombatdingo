@@ -2,13 +2,11 @@
 import fetch from 'isomorphic-fetch';
 import React from 'react';
 import L from 'leaflet';
-// import R from 'ramda';
 import Dropdown from '../components/dropdown';
 import classnames from 'classnames';
 import _ from 'lodash';
 
-// const countryGeom = require('../../data/countries.json');
-const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/map.json';
+const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 
 const viewFilterMatrix = {
   all: 'Everything',

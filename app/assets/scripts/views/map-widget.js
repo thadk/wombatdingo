@@ -7,6 +7,7 @@ import classnames from 'classnames';
 import _ from 'lodash';
 
 const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
+const godiScores = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
   all: 'Everything',
@@ -84,6 +85,8 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       mapGeoJSON: null,
+      godiScores: null,
+      godiData: null,
       activeCountryProperties: null,
       viewFilter: 'all'
     };
@@ -106,6 +109,19 @@ var MapWidget = React.createClass({
         mapGeoJSON: countryData
       });
       this.setupMap();
+    });
+
+    fetch(godiScores)
+    .then(response => {
+      if (response.status >= 400) {
+        throw new Error('Bad response');
+      }
+      return response.json();
+    })
+    .then(godiResults => {
+      this.setState({
+        godiData: godiResults
+      });
     });
   },
 
@@ -212,7 +228,14 @@ var MapWidget = React.createClass({
     }
 
     let country = this.state.activeCountryProperties;
-    console.log(country);
+    let godi = this.state.godiData;
+
+    if (country) {
+      let i = _.findIndex(godi, function (o) { return o.id === country.iso_a2.toLowerCase(); });
+      if (i !== -1) {
+        var countryGodi = godi[i];
+      }
+    }
 
     return (
       <section className='ocp-map'>
@@ -237,7 +260,6 @@ var MapWidget = React.createClass({
                 })}
               </ul>
             </Dropdown>
-
           </div>
         </header>
         <div className='ocp-map__body'>
@@ -245,6 +267,9 @@ var MapWidget = React.createClass({
           {country !== null ? (
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
+            {countryGodi ? (
+              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.name.toLowerCase().replace(' ', '-')} target='_blank'>{countryGodi.score}%</a></p>
+            ) : '' }
             <h3>OCDS</h3>
             <ul>
               {_.map(ocdsMatrix, (o, i) => {

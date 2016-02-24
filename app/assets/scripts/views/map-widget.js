@@ -1,5 +1,6 @@
 'use strict';
 import fetch from 'isomorphic-fetch';
+import Promise from 'bluebird';
 import React from 'react';
 import L from 'leaflet';
 import Dropdown from '../components/dropdown';
@@ -7,12 +8,19 @@ import classnames from 'classnames';
 import _ from 'lodash';
 
 const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
+const godiScores = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
   all: 'Everything',
   ocds: 'OCDS',
   commitments: 'OGP Relevant commitments',
   contracts: 'Publishing contracts'
+};
+
+const ocdsMatrix = {
+  ocds_implementation: 'In implementation',
+  ocds_historic_data: 'Historic data',
+  ocds_ongoing_data: 'Ongoing data'
 };
 
 var MapWidget = React.createClass({
@@ -78,6 +86,8 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       mapGeoJSON: null,
+      godiScores: null,
+      godiData: null,
       activeCountryProperties: null,
       viewFilter: 'all'
     };
@@ -85,19 +95,33 @@ var MapWidget = React.createClass({
 
   componentDidMount: function () {
     this.setState({fetchingData: true});
-    // Network request.
-    fetch(mapGeoJSON)
-    .then(response => {
-      if (response.status >= 400) {
-        throw new Error('Bad response');
-      }
-      return response.json();
-    })
-    .then(countryData => {
+
+    Promise.all([
+      fetch(mapGeoJSON)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      }),
+
+      fetch(godiScores)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      })
+    ])
+    .then(data => {
+      let countryData = data[0];
+      let godiResults = data[1];
+
       this.setState({
         fetchingData: false,
         fetchedData: true,
-        mapGeoJSON: countryData
+        mapGeoJSON: countryData,
+        godiData: godiResults
       });
       this.setupMap();
     });
@@ -120,7 +144,7 @@ var MapWidget = React.createClass({
 
   setCountryStyle: function (layer) {
     // Invalid.
-    if (layer.feature.properties.isInvalid) {
+    if (!layer.feature.properties.has_data) {
       layer.setStyle(this.layerStyles.nodata);
       return;
     }
@@ -158,12 +182,11 @@ var MapWidget = React.createClass({
   },
 
   onEachFeature: function (feature, layer) {
-    layer.feature.properties.isInvalid = Object.keys(layer.feature.properties).length === 3;
     this.setCountryStyle(layer);
 
     layer
       .on('click', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         this.setState({
@@ -171,7 +194,7 @@ var MapWidget = React.createClass({
         });
       })
       .on('mousemove', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         // Don't act on the selected layer.
@@ -180,7 +203,7 @@ var MapWidget = React.createClass({
         }
       })
       .on('mouseout', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         // Don't act on the selected layer.
@@ -206,6 +229,11 @@ var MapWidget = React.createClass({
     }
 
     let country = this.state.activeCountryProperties;
+    let godi = this.state.godiData;
+    let countryGodi = null;
+    if (country) {
+      countryGodi = _.find(godi, {'id': country.iso_a2.toLowerCase()});
+    }
 
     return (
       <section className='ocp-map'>
@@ -230,7 +258,6 @@ var MapWidget = React.createClass({
                 })}
               </ul>
             </Dropdown>
-
           </div>
         </header>
         <div className='ocp-map__body'>
@@ -238,12 +265,32 @@ var MapWidget = React.createClass({
           {country !== null ? (
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
-            <dl className='ocp-map-details'>
-              <dd>The label</dd>
-              <dt>The value, probably "No"</dt>
-              <dd>The label</dd>
-              <dt>The value, probably "No"</dt>
-            </dl>
+            {countryGodi ? (
+              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.slug} target='_blank'>{countryGodi.score}%</a></p>
+            ) : null}
+            <h3>OCDS</h3>
+            <ul>
+              {_.map(ocdsMatrix, (o, i) => {
+                return (
+                  <li key={i}
+                    className={classnames('ocds-item', {'ocds-item--active': country[i]})}>{o}</li>
+                );
+              })}
+            </ul>
+            {country.ocds_description ? <p>{country.ocds_description}</p> : null }
+            <h3>Relevant OGP commitment</h3>
+            {country.ogp_commitments.length ? (
+              <ol>
+              {_.map(country.ogp_commitments, (o, i) => {
+                return (
+                  <li key={i}>
+                    {o.ogp_commitment}
+                    {o.ogp_commitment_link ? <a href={o.ogp_commitment_link} target='_blank'></a> : null}
+                  </li>
+                );
+              })}
+              </ol>) : <p className='no-results'>No relevant commitment</p>}
+            <p><a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank'>Improve this data</a></p>
           </div>
           ) : null}
         </div>

@@ -13,6 +13,7 @@
 
   &__content {
     background-color: #fff;
+    font-size: 0.875rem;
     padding: 1rem;
     width: 33.333%;
     min-width: 20rem;
@@ -24,6 +25,26 @@
       @extend .heading--small;
       color: $primary-color;
     }
+
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    .ocds-item {
+      color: $disabled_font_color;
+      &:after {
+        @extend .collecticons-sm-xmark;
+        color: $danger-color;
+      }
+      &.ocds-item--active {
+        color: $base-color;
+        font-weight: $base-font-bold;
+        &:after {
+          @extend .collecticons-sm-tick;
+          color: $primary-color;
+        }
+    }
+  }
   }
 
   &__actions {
@@ -40,21 +61,5 @@
       width: 20rem;
     }
   }
-
-  .ocp-map-details {
-    margin: 0;
-
-    dd {
-      font-weight: $base-font-bold;
-      margin: 0;
-    }
-    dt {
-      text-transform: none;
-      margin-bottom: 1rem;
-
-      &:last-child {
-        margin: 0;
-      }
-    }
-  }
 }
+

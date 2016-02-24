@@ -1,5 +1,6 @@
 'use strict';
 import fetch from 'isomorphic-fetch';
+import Promise from 'bluebird';
 import React from 'react';
 import L from 'leaflet';
 import Dropdown from '../components/dropdown';
@@ -94,34 +95,35 @@ var MapWidget = React.createClass({
 
   componentDidMount: function () {
     this.setState({fetchingData: true});
-    // Network request.
-    fetch(mapGeoJSON)
-    .then(response => {
-      if (response.status >= 400) {
-        throw new Error('Bad response');
-      }
-      return response.json();
-    })
-    .then(countryData => {
+
+    Promise.all([
+      fetch(mapGeoJSON)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      }),
+
+      fetch(godiScores)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      })
+    ])
+    .then(data => {
+      let countryData = data[0];
+      let godiResults = data[1];
+
       this.setState({
         fetchingData: false,
         fetchedData: true,
-        mapGeoJSON: countryData
-      });
-      this.setupMap();
-    });
-
-    fetch(godiScores)
-    .then(response => {
-      if (response.status >= 400) {
-        throw new Error('Bad response');
-      }
-      return response.json();
-    })
-    .then(godiResults => {
-      this.setState({
+        mapGeoJSON: countryData,
         godiData: godiResults
       });
+      this.setupMap();
     });
   },
 
@@ -229,12 +231,9 @@ var MapWidget = React.createClass({
 
     let country = this.state.activeCountryProperties;
     let godi = this.state.godiData;
-
+    let countryGodi = null;
     if (country) {
-      let i = _.findIndex(godi, function (o) { return o.id === country.iso_a2.toLowerCase(); });
-      if (i !== -1) {
-        var countryGodi = godi[i];
-      }
+      countryGodi = _.find(godi, {'id': country.iso_a2.toLowerCase()});
     }
 
     return (
@@ -268,15 +267,14 @@ var MapWidget = React.createClass({
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
             {countryGodi ? (
-              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.name.toLowerCase().replace(' ', '-')} target='_blank'>{countryGodi.score}%</a></p>
-            ) : '' }
+              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.slug} target='_blank'>{countryGodi.score}%</a></p>
+            ) : null}
             <h3>OCDS</h3>
             <ul>
               {_.map(ocdsMatrix, (o, i) => {
                 return (
                   <li key={i}
-                    className={classnames('ocds-item', {'ocds-item--active': country[i]})}
-                    >{o}</li>
+                    className={classnames('ocds-item', {'ocds-item--active': country[i]})}>{o}</li>
                 );
               })}
             </ul>
@@ -288,7 +286,7 @@ var MapWidget = React.createClass({
                 return (
                   <li key={i}>
                     {o.ogp_commitment}
-                    {o.ogp_commitment_link ? <a href={o.ogp_commitment_link} target='_blank'></a> : ''}
+                    {o.ogp_commitment_link ? <a href={o.ogp_commitment_link} target='_blank'></a> : null}
                   </li>
                 );
               })}

@@ -144,7 +144,7 @@ var MapWidget = React.createClass({
 
   setCountryStyle: function (layer) {
     // Invalid.
-    if (layer.feature.properties.isInvalid) {
+    if (!layer.feature.properties.has_data) {
       layer.setStyle(this.layerStyles.nodata);
       return;
     }
@@ -182,12 +182,11 @@ var MapWidget = React.createClass({
   },
 
   onEachFeature: function (feature, layer) {
-    layer.feature.properties.isInvalid = Object.keys(layer.feature.properties).length === 3;
     this.setCountryStyle(layer);
 
     layer
       .on('click', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         this.setState({
@@ -195,7 +194,7 @@ var MapWidget = React.createClass({
         });
       })
       .on('mousemove', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         // Don't act on the selected layer.
@@ -204,7 +203,7 @@ var MapWidget = React.createClass({
         }
       })
       .on('mouseout', e => {
-        if (layer.feature.properties.isInvalid) {
+        if (!layer.feature.properties.has_data) {
           return;
         }
         // Don't act on the selected layer.

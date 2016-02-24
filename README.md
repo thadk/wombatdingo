@@ -2,7 +2,14 @@
 
 [description of the widgets]  
 
-[how to use the widgets]
+Widgets can be initialized using:
+
+```html
+<script>
+  OC_MAP.initMapWidget(document.querySelector('.oc-map--map-widget'));
+  OC_MAP.initTableWidget(document.querySelector('.oc-map--table-widget'));
+</script>
+```
 
 ## Development environment
 To set up the development environment for this website, you'll need to install the following on your system:

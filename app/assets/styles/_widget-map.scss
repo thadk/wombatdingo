@@ -36,19 +36,15 @@
         @extend .collecticons-sm-xmark;
         color: $danger-color;
       }
-      &--active {
+      &.ocds-item--active {
         color: $base-color;
         font-weight: $base-font-bold;
         &:after {
           @extend .collecticons-sm-tick;
           color: $primary-color;
-          //z-index: 1;
-          //font-size: 1.25rem;
-          //line-height: 1.5rem;
-          //opacity: 0.48;
         }
-      }
     }
+  }
   }
 
   &__actions {

@@ -23,6 +23,7 @@ $base-alpha-color: rgba($base-color, 0.12);
  * $base-* refers to the base styles when there's nothing else to override them.
  */
 $base-font-color: $base-color;
+$disabled-font-color: tint($base-font-color, 30%);
 $base-font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 $base-font-style: normal;
 $base-font-light: 300;

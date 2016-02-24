@@ -8,12 +8,12 @@
   }
 
   &__map {
-    background-color: #ddd;
-    min-height: 300px;
+    min-height: 500px;
   }
 
   &__content {
     background-color: #fff;
+    font-size: 0.875rem;
     padding: 1rem;
     width: 33.333%;
     min-width: 20rem;
@@ -25,5 +25,41 @@
       @extend .heading--small;
       color: $primary-color;
     }
+
+    h3 {
+      font-size: 1.25rem;
+    }
+
+    .ocds-item {
+      color: $disabled_font_color;
+      &:after {
+        @extend .collecticons-sm-xmark;
+        color: $danger-color;
+      }
+      &.ocds-item--active {
+        color: $base-color;
+        font-weight: $base-font-bold;
+        &:after {
+          @extend .collecticons-sm-tick;
+          color: $primary-color;
+        }
+    }
+  }
+  }
+
+  &__actions {
+    background-color: $base-color;
+    padding: 1rem;
+    color: #fff;
+    text-transform: uppercase;
+
+    &-description {
+      margin-right: 1rem;
+    }
+
+    .drop__menu {
+      width: 20rem;
+    }
   }
 }
+

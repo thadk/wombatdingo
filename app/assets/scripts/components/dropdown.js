@@ -2,6 +2,8 @@
 import React from 'react';
 
 const Dropdown = React.createClass({
+  displayName: 'Dropdown',
+
   propTypes: {
     className: React.PropTypes.string,
     triggerTitle: React.PropTypes.string,

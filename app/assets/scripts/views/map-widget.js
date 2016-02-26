@@ -57,27 +57,40 @@ var MapWidget = React.createClass({
       fillOpacity: 1,
       fillColor: '#C2DC16'
     },
-
-    green: {
-      color: '#27ae60',
+    lilac: {
+      color: '#6C75E1',
       weight: 1,
       opacity: 1,
       fillOpacity: 1,
-      fillColor: '#27ae60'
-    },
-    yellow: {
-      color: '#f39c12',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#f1c40f'
+      fillColor: '#6C75E1'
     },
     orange: {
-      color: '#d35400',
+      color: '#FD843D',
       weight: 1,
       opacity: 1,
       fillOpacity: 1,
-      fillColor: '#e67e22'
+      fillColor: '#FD843D'
+    },
+    teal: {
+      color: '#23B2A7',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#23B2A7'
+    },
+    darkorange: {
+      color: '#FB6045',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#FB6045'
+    },
+    blue: {
+      color: '#6991F5',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#6991F5'
     }
   },
 
@@ -163,21 +176,21 @@ var MapWidget = React.createClass({
     switch (this.state.viewFilter) {
       case 'ocds':
         if (_.find(lProps.publishers, {ocds_ongoing_data: true})) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.lilac);
         } else if (_.find(lProps.publishers, {ocds_historic_data: true})) {
-          layer.setStyle(this.layerStyles.yellow);
-        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
           layer.setStyle(this.layerStyles.orange);
+        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
+          layer.setStyle(this.layerStyles.teal);
         }
         break;
       case 'commitments':
         if (lProps.ogp_commitments && lProps.ogp_commitments.length) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.darkorange);
         }
         break;
       case 'contracts':
         if (lProps.innovations && lProps.innovations.length) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.blue);
         }
         break;
     }
@@ -233,7 +246,7 @@ var MapWidget = React.createClass({
     if (!countryGodi) {
       return;
     }
-    return <p>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
+    return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
   },
 
   renderPublisher: function (publishers) {
@@ -339,7 +352,7 @@ var MapWidget = React.createClass({
 
             {this.renderCommitments(country)}
 
-            <p><a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank'>Improve this data</a></p>
+            <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--primary-outline', 'button--small')}>Improve the data</a>
           </div>
           ) : null}
         </div>

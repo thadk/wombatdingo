@@ -19,19 +19,22 @@ var TableWidget = React.createClass({
     };
   },
 
-  componentDidMount: function () {
+  fetchData: function () {
     this.setState({fetchingData: true});
     // Network request.
     fetch('https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_table.json')
       .then(response => response.json())
       .then(response => {
-        console.log('response', response);
         this.setState({
           fetchingData: false,
           fetchedData: true,
           data: response
         });
       });
+  },
+
+  componentDidMount: function () {
+    this.fetchData();
   },
 
   sortLinkClickHandler: function (field, e) {

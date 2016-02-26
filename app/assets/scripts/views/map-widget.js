@@ -8,7 +8,7 @@ import classnames from 'classnames';
 import _ from 'lodash';
 
 const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
-const godiScores = 'http://index.okfn.org/api/places.json';
+const godiScores = 'http://index.okfn.org/api/entries.json';
 
 const viewFilterMatrix = {
   all: 'Everything',
@@ -18,9 +18,9 @@ const viewFilterMatrix = {
 };
 
 const ocdsMatrix = {
-  ocds_implementation: 'In implementation',
-  ocds_historic_data: 'Historic data',
-  ocds_ongoing_data: 'Ongoing data'
+  ocds_implementation: 'in implementation',
+  ocds_historic_data: 'historic data',
+  ocds_ongoing_data: 'ongoing data'
 };
 
 var MapWidget = React.createClass({
@@ -93,7 +93,7 @@ var MapWidget = React.createClass({
     };
   },
 
-  componentDidMount: function () {
+  fetchData: function () {
     this.setState({fetchingData: true});
 
     Promise.all([
@@ -127,6 +127,10 @@ var MapWidget = React.createClass({
     });
   },
 
+  componentDidMount: function () {
+    this.fetchData();
+  },
+
   componentDidUpdate: function () {
     if (this.mapCountryLayer) {
       this.setCountriesStyle();
@@ -158,23 +162,25 @@ var MapWidget = React.createClass({
     // Default style.
     layer.setStyle(this.layerStyles.default);
 
+    let lProps = layer.feature.properties;
+
     switch (this.state.viewFilter) {
       case 'ocds':
-        if (layer.feature.properties.ocds_ongoing_data) {
+        if (_.find(lProps.publishers, {ocds_ongoing_data: true})) {
           layer.setStyle(this.layerStyles.green);
-        } else if (layer.feature.properties.ocds_historic_data) {
+        } else if (_.find(lProps.publishers, {ocds_historic_data: true})) {
           layer.setStyle(this.layerStyles.yellow);
-        } else if (layer.feature.properties.ocds_implementation) {
+        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
           layer.setStyle(this.layerStyles.orange);
         }
         break;
       case 'commitments':
-        if (layer.feature.properties.ogp_commitments && layer.feature.properties.ogp_commitments.length) {
+        if (lProps.ogp_commitments && lProps.ogp_commitments.length) {
           layer.setStyle(this.layerStyles.green);
         }
         break;
       case 'contracts':
-        if (layer.feature.properties.innovations && layer.feature.properties.innovations.length) {
+        if (lProps.innovations && lProps.innovations.length) {
           layer.setStyle(this.layerStyles.green);
         }
         break;
@@ -223,17 +229,80 @@ var MapWidget = React.createClass({
     // .addTo(map);
   },
 
+  renderGodi: function (country) {
+    let godi = this.state.godiData;
+    let countryGodi = null;
+    countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
+
+    if (!countryGodi) {
+      return;
+    }
+    return <p>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
+  },
+
+  renderPublisher: function (publishers) {
+    if (!publishers.length) {
+      return <div><h3>Publishing open contracting data</h3><p>No entity publishing data yet</p></div>;
+    }
+
+    let content = _.map(publishers, (o, i) => {
+      var status = [];
+      _.forEach(ocdsMatrix, (str, idx) => {
+        if (o[idx]) { status.push(str); }
+      });
+      var statusStr = status.join(', ');
+      return (
+        <li key={i}><a href={o.publisher_link} target='_blank'>{o.publisher}</a>:
+          {statusStr ? <span> {statusStr}</span> : null}
+        </li>
+      );
+    });
+    return <div><h3>Publishing open contracting data</h3><ul>{content}</ul></div>;
+  },
+
+  renderInnovations: function (innovations) {
+    if (!innovations.length) {
+      return;
+    }
+
+    let content = _.map(innovations, (o, i) => {
+      return (
+        <li key={i}><a href={o.innovation_link} target='_blank'>{o.innovation_description}</a></li>
+      );
+    });
+
+    return <div><h3>Innovations in contract monitoring and data use</h3><ul>{content}</ul></div>;
+  },
+
+  renderCommitments: function (country) {
+    if (!(country.ogp_commitments.length) && (!(country.commitment_oil_mining) || country.commitment_oil_mining === 'none')) {
+      return;
+    }
+
+    let content_ogp = _.map(country.ogp_commitments, (o, i) => {
+      return (
+        <li key={i}>OGP: <a href={o.ogp_commitment_link} target='_blank'>{o.ogp_commitment}</a></li>
+      );
+    });
+
+    let content;
+    if (country.commitment_oil_mining) {
+      if (country.commitment_oil_mining) {
+        content = <li>Oil and Mining: <a href={country.commitment_oil_mining_link} target='_blank'>{country.commitment_oil_mining}</a></li>;
+      } else {
+        content = <li>Oil and Mining: {country.commitment_oil_mining}</li>;
+      }
+    }
+
+    return <div><h3>Commitments</h3><ul>{content_ogp}{content}</ul></div>;
+  },
+
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {
       return null;
     }
 
     let country = this.state.activeCountryProperties;
-    let godi = this.state.godiData;
-    let countryGodi = null;
-    if (country) {
-      countryGodi = _.find(godi, {'id': country.iso_a2.toLowerCase()});
-    }
 
     return (
       <section className='ocp-map'>
@@ -265,31 +334,15 @@ var MapWidget = React.createClass({
           {country !== null ? (
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
-            {countryGodi ? (
-              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.slug} target='_blank'>{countryGodi.score}%</a></p>
-            ) : null}
-            <h3>OCDS</h3>
-            <ul>
-              {_.map(ocdsMatrix, (o, i) => {
-                return (
-                  <li key={i}
-                    className={classnames('ocds-item', {'ocds-item--active': country[i]})}>{o}</li>
-                );
-              })}
-            </ul>
-            {country.ocds_description ? <p>{country.ocds_description}</p> : null }
-            <h3>Relevant OGP commitment</h3>
-            {country.ogp_commitments.length ? (
-              <ol>
-              {_.map(country.ogp_commitments, (o, i) => {
-                return (
-                  <li key={i}>
-                    {o.ogp_commitment}
-                    {o.ogp_commitment_link ? <a href={o.ogp_commitment_link} target='_blank'></a> : null}
-                  </li>
-                );
-              })}
-              </ol>) : <p className='no-results'>No relevant commitment</p>}
+
+            {this.renderGodi(country)}
+
+            {this.renderPublisher(country.publishers)}
+
+            {this.renderInnovations(country.innovations)}
+
+            {this.renderCommitments(country)}
+
             <p><a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank'>Improve this data</a></p>
           </div>
           ) : null}

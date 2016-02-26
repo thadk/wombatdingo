@@ -158,23 +158,25 @@ var MapWidget = React.createClass({
     // Default style.
     layer.setStyle(this.layerStyles.default);
 
+    let lProps = layer.feature.properties;
+
     switch (this.state.viewFilter) {
       case 'ocds':
-        if (layer.feature.properties.ocds_ongoing_data) {
+        if (_.find(lProps.publishers, {ocds_ongoing_data: true})) {
           layer.setStyle(this.layerStyles.green);
-        } else if (layer.feature.properties.ocds_historic_data) {
+        } else if (_.find(lProps.publishers, {ocds_historic_data: true})) {
           layer.setStyle(this.layerStyles.yellow);
-        } else if (layer.feature.properties.ocds_implementation) {
+        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
           layer.setStyle(this.layerStyles.orange);
         }
         break;
       case 'commitments':
-        if (layer.feature.properties.ogp_commitments && layer.feature.properties.ogp_commitments.length) {
+        if (lProps.ogp_commitments && lProps.ogp_commitments.length) {
           layer.setStyle(this.layerStyles.green);
         }
         break;
       case 'contracts':
-        if (layer.feature.properties.innovations && layer.feature.properties.innovations.length) {
+        if (lProps.innovations && lProps.innovations.length) {
           layer.setStyle(this.layerStyles.green);
         }
         break;

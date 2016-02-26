@@ -8,7 +8,7 @@ import classnames from 'classnames';
 import _ from 'lodash';
 
 const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
-const godiScores = 'http://index.okfn.org/api/places.json';
+const godiScores = 'http://index.okfn.org/api/entries.json';
 
 const viewFilterMatrix = {
   all: 'Everything',
@@ -232,7 +232,7 @@ var MapWidget = React.createClass({
     let godi = this.state.godiData;
     let countryGodi = null;
     if (country) {
-      countryGodi = _.find(godi, {'id': country.iso_a2.toLowerCase()});
+      countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
     }
 
     return (
@@ -266,7 +266,7 @@ var MapWidget = React.createClass({
           <div className='ocp-map__content'>
             <h2>{country.name}</h2>
             {countryGodi ? (
-              <p>Global Open Data Index Score: <a href={'http://index.okfn.org/place/' + countryGodi.slug} target='_blank'>{countryGodi.score}%</a></p>
+              <p>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>
             ) : null}
             <h3>OCDS</h3>
             <ul>

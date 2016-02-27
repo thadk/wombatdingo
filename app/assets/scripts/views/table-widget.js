@@ -19,7 +19,7 @@ var TableWidget = React.createClass({
     };
   },
 
-  componentDidMount: function () {
+  fetchData: function () {
     this.setState({fetchingData: true});
     // Network request.
     fetch('https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_table.json')
@@ -31,6 +31,10 @@ var TableWidget = React.createClass({
           data: response
         });
       });
+  },
+
+  componentDidMount: function () {
+    this.fetchData();
   },
 
   sortLinkClickHandler: function (field, e) {

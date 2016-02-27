@@ -106,7 +106,7 @@ var MapWidget = React.createClass({
     };
   },
 
-  componentDidMount: function () {
+  fetchData: function () {
     this.setState({fetchingData: true});
 
     Promise.all([
@@ -138,6 +138,10 @@ var MapWidget = React.createClass({
       });
       this.setupMap();
     });
+  },
+
+  componentDidMount: function () {
+    this.fetchData();
   },
 
   componentDidUpdate: function () {

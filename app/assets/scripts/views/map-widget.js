@@ -57,27 +57,40 @@ var MapWidget = React.createClass({
       fillOpacity: 1,
       fillColor: '#C2DC16'
     },
-
-    green: {
-      color: '#27ae60',
+    lilac: {
+      color: '#6C75E1',
       weight: 1,
       opacity: 1,
       fillOpacity: 1,
-      fillColor: '#27ae60'
-    },
-    yellow: {
-      color: '#f39c12',
-      weight: 1,
-      opacity: 1,
-      fillOpacity: 1,
-      fillColor: '#f1c40f'
+      fillColor: '#6C75E1'
     },
     orange: {
-      color: '#d35400',
+      color: '#FD843D',
       weight: 1,
       opacity: 1,
       fillOpacity: 1,
-      fillColor: '#e67e22'
+      fillColor: '#FD843D'
+    },
+    teal: {
+      color: '#23B2A7',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#23B2A7'
+    },
+    darkorange: {
+      color: '#FB6045',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#FB6045'
+    },
+    blue: {
+      color: '#6991F5',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#6991F5'
     }
   },
 
@@ -142,6 +155,11 @@ var MapWidget = React.createClass({
     this.setState({ viewFilter: key });
   },
 
+  closeClickHandler: function (e) {
+    e.preventDefault();
+    this.setState({ activeCountryProperties: null });
+  },
+
   setCountriesStyle: function () {
     this.mapCountryLayer.eachLayer(this.setCountryStyle);
   },
@@ -167,21 +185,21 @@ var MapWidget = React.createClass({
     switch (this.state.viewFilter) {
       case 'ocds':
         if (_.find(lProps.publishers, {ocds_ongoing_data: true})) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.lilac);
         } else if (_.find(lProps.publishers, {ocds_historic_data: true})) {
-          layer.setStyle(this.layerStyles.yellow);
-        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
           layer.setStyle(this.layerStyles.orange);
+        } else if (_.find(lProps.publishers, {ocds_implementation: true})) {
+          layer.setStyle(this.layerStyles.teal);
         }
         break;
       case 'commitments':
         if (lProps.ogp_commitments && lProps.ogp_commitments.length) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.darkorange);
         }
         break;
       case 'contracts':
         if (lProps.innovations && lProps.innovations.length) {
-          layer.setStyle(this.layerStyles.green);
+          layer.setStyle(this.layerStyles.blue);
         }
         break;
     }
@@ -224,9 +242,6 @@ var MapWidget = React.createClass({
     this.mapCountryLayer = L.geoJson(this.state.mapGeoJSON, {
       onEachFeature: this.onEachFeature
     }).addTo(map);
-    /* label layer (not working) */
-    // L.tileLayer('https://api.mapbox.com/v4/mapbox.ex50cnmi/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
-    // .addTo(map);
   },
 
   renderGodi: function (country) {
@@ -237,7 +252,7 @@ var MapWidget = React.createClass({
     if (!countryGodi) {
       return;
     }
-    return <p>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
+    return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
   },
 
   renderPublisher: function (publishers) {
@@ -331,21 +346,24 @@ var MapWidget = React.createClass({
         </header>
         <div className='ocp-map__body'>
           <div className='ocp-map__map' ref='mapHolder'>{/* Map renders here */}</div>
-          {country !== null ? (
-          <div className='ocp-map__content'>
-            <h2>{country.name}</h2>
+          <div className={classnames('ocp-map__content-wrapper', {'ocp-revealed': country !== null})}>
+            {country !== null ? (
+            <div className='ocp-map__content'>
+              <a href='#' className='ocp-map__button-close' onClick={this.closeClickHandler}><span>Close map content</span></a>
+              <h2>{country.name}</h2>
 
-            {this.renderGodi(country)}
+              {this.renderGodi(country)}
 
-            {this.renderPublisher(country.publishers)}
+              {this.renderPublisher(country.publishers)}
 
-            {this.renderInnovations(country.innovations)}
+              {this.renderInnovations(country.innovations)}
 
-            {this.renderCommitments(country)}
+              {this.renderCommitments(country)}
 
-            <p><a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank'>Improve this data</a></p>
+              <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--primary-outline', 'button--small')}>Improve the data</a>
+            </div>
+            ) : null}
           </div>
-          ) : null}
         </div>
       </section>
     );

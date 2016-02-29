@@ -155,6 +155,11 @@ var MapWidget = React.createClass({
     this.setState({ viewFilter: key });
   },
 
+  closeClickHandler: function (e) {
+    e.preventDefault();
+    this.setState({ activeCountryProperties: null });
+  },
+
   setCountriesStyle: function () {
     this.mapCountryLayer.eachLayer(this.setCountryStyle);
   },
@@ -237,9 +242,6 @@ var MapWidget = React.createClass({
     this.mapCountryLayer = L.geoJson(this.state.mapGeoJSON, {
       onEachFeature: this.onEachFeature
     }).addTo(map);
-    /* label layer (not working) */
-    // L.tileLayer('https://api.mapbox.com/v4/mapbox.ex50cnmi/{z}/{x}/{y}.png?access_token=pk.eyJ1Ijoic3RhdGVvZnNhdGVsbGl0ZSIsImEiOiJlZTM5ODI5NGYwZWM2MjRlZmEyNzEyMWRjZWJlY2FhZiJ9.omsA8QDSKggbxiJjumiA_w.')
-    // .addTo(map);
   },
 
   renderGodi: function (country) {
@@ -344,21 +346,24 @@ var MapWidget = React.createClass({
         </header>
         <div className='ocp-map__body'>
           <div className='ocp-map__map' ref='mapHolder'>{/* Map renders here */}</div>
-          {country !== null ? (
-          <div className='ocp-map__content'>
-            <h2>{country.name}</h2>
+          <div className={classnames('ocp-map__content-wrapper', {'ocp-revealed': country !== null})}>
+            {country !== null ? (
+            <div className='ocp-map__content'>
+              <a href='#' className='ocp-map__button-close' onClick={this.closeClickHandler}><span>Close map content</span></a>
+              <h2>{country.name}</h2>
 
-            {this.renderGodi(country)}
+              {this.renderGodi(country)}
 
-            {this.renderPublisher(country.publishers)}
+              {this.renderPublisher(country.publishers)}
 
-            {this.renderInnovations(country.innovations)}
+              {this.renderInnovations(country.innovations)}
 
-            {this.renderCommitments(country)}
+              {this.renderCommitments(country)}
 
-            <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--primary-outline', 'button--small')}>Improve the data</a>
+              <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--primary-outline', 'button--small')}>Improve the data</a>
+            </div>
+            ) : null}
           </div>
-          ) : null}
         </div>
       </section>
     );

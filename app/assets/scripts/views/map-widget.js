@@ -9,6 +9,7 @@ import _ from 'lodash';
 
 const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 const godiScores = 'http://index.okfn.org/api/entries.json';
+const godiSlugs = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
   all: 'Everything',
@@ -101,6 +102,7 @@ var MapWidget = React.createClass({
       mapGeoJSON: null,
       godiScores: null,
       godiData: null,
+      godiPlaces: null,
       activeCountryProperties: null,
       viewFilter: 'all'
     };
@@ -124,17 +126,27 @@ var MapWidget = React.createClass({
           throw new Error('Bad response');
         }
         return response.json();
+      }),
+
+      fetch(godiSlugs)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
       })
     ])
     .then(data => {
       let countryData = data[0];
       let godiResults = data[1];
+      let godiPlaceData = data[2];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
         mapGeoJSON: countryData,
-        godiData: godiResults
+        godiData: godiResults,
+        godiPlaces: godiPlaceData
       });
       this.setupMap();
     });
@@ -238,7 +250,7 @@ var MapWidget = React.createClass({
   },
 
   setupMap: function () {
-    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 1);
+    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 2);
     this.mapCountryLayer = L.geoJson(this.state.mapGeoJSON, {
       onEachFeature: this.onEachFeature
     }).addTo(map);
@@ -247,12 +259,16 @@ var MapWidget = React.createClass({
   renderGodi: function (country) {
     let godi = this.state.godiData;
     let countryGodi = null;
-    countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
+    let godiPlaces = this.state.godiPlaces;
+    let countryMeta = null;
 
-    if (!countryGodi) {
+    countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
+    countryMeta = _.find(godiPlaces, {'id': country.iso_a2.toLowerCase()});
+
+    if (!countryGodi || !countryMeta) {
       return;
     }
-    return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryGodi.place} target='_blank'>{countryGodi.score}%</a></p>;
+    return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryMeta.slug} target='_blank'>{countryGodi.score}%</a></p>;
   },
 
   renderPublisher: function (publishers) {

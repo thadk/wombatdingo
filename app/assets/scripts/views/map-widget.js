@@ -3,11 +3,12 @@ import fetch from 'isomorphic-fetch';
 import Promise from 'bluebird';
 import React from 'react';
 import L from 'leaflet';
-import Dropdown from '../components/dropdown';
 import classnames from 'classnames';
 import _ from 'lodash';
+import omnivore from 'leaflet-omnivore';
+import Dropdown from '../components/dropdown';
 
-const mapGeoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
+const mapTopoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 const godiScores = 'http://index.okfn.org/api/entries.json';
 const godiSlugs = 'http://index.okfn.org/api/places.json';
 
@@ -99,7 +100,7 @@ var MapWidget = React.createClass({
     return {
       fetchedData: false,
       fetchingData: false,
-      mapGeoJSON: null,
+      mapTopoJSON: null,
       godiScores: null,
       godiData: null,
       godiPlaces: null,
@@ -112,7 +113,7 @@ var MapWidget = React.createClass({
     this.setState({fetchingData: true});
 
     Promise.all([
-      fetch(mapGeoJSON)
+      fetch(mapTopoJSON)
       .then(response => {
         if (response.status >= 400) {
           throw new Error('Bad response');
@@ -144,7 +145,7 @@ var MapWidget = React.createClass({
       this.setState({
         fetchingData: false,
         fetchedData: true,
-        mapGeoJSON: countryData,
+        mapTopoJSON: countryData,
         godiData: godiResults,
         godiPlaces: godiPlaceData
       });
@@ -217,7 +218,7 @@ var MapWidget = React.createClass({
     }
   },
 
-  onEachFeature: function (feature, layer) {
+  onEachLayer: function (layer) {
     this.setCountryStyle(layer);
 
     layer
@@ -251,9 +252,9 @@ var MapWidget = React.createClass({
 
   setupMap: function () {
     var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 2);
-    this.mapCountryLayer = L.geoJson(this.state.mapGeoJSON, {
-      onEachFeature: this.onEachFeature
-    }).addTo(map);
+    this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
+      .eachLayer(this.onEachLayer)
+      .addTo(map);
   },
 
   renderGodi: function (country) {

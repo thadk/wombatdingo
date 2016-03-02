@@ -250,7 +250,7 @@ var MapWidget = React.createClass({
   },
 
   setupMap: function () {
-    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 1);
+    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 2);
     this.mapCountryLayer = L.geoJson(this.state.mapGeoJSON, {
       onEachFeature: this.onEachFeature
     }).addTo(map);

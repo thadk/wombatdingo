@@ -1,71 +1,30 @@
-/* ==========================================================================
-   Base
-   ========================================================================== */
-
-html {
-  box-sizing: border-box;
-  font-size: 16px;
-}
-
-*, *:before, *:after, input[type="search"] {
-  box-sizing: inherit;
-}
-
-html, body {
-  height: 100%;
-}
-
-body {
-  background: #fff;
-  color: $base-font-color;
-  font-size: 1rem;
-  line-height: 1.5;
-  font-family: $base-font-family;
-  font-weight: $base-font-weight;
-  font-style: $base-font-style;
-  min-width: $row-min-width;
-}
-
-
 /* Links
    ========================================================================== */
 
-a {
-  cursor: pointer;
-  color: $link-color;
-  text-decoration: none;
-  transition: opacity 0.24s ease 0s;
-}
+.ocp-map,
+.ocp-table {
+  a {
+    cursor: pointer;
+    color: $link-color;
+    text-decoration: none;
+    transition: opacity 0.24s ease 0s;
+  }
 
-a:visited {
-  color: $link-color;
-}
+  a:visited {
+    color: $link-color;
+  }
 
-a:hover {
-  opacity: 0.64;
-  outline: none;
-}
+  a:hover {
+    opacity: 0.64;
+    outline: none;
+  }
 
-a:active {
-  outline: none;
-  transform: translate(0, 1px);
+  a:active {
+    outline: none;
+    transform: translate(0, 1px);
+  }
 }
 
 /* ==========================================================================
    Structure
    ========================================================================== */
-
-// vv TEMP ///////////////////////////////////////
-.oc-map--map-widget,
-.oc-map--table-widget {
-  border: 1px solid steelblue;
-  margin: 3rem;
-}
-// ^^ TEMP ///////////////////////////////////////
-
-.ocp-map,
-.ocp-table {
-  &__title {
-    @extend .visually-hidden;
-  }
-}

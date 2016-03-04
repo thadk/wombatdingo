@@ -3,6 +3,10 @@
    ========================================================================== */
 
 .ocp-map {
+  &__title {
+    @extend .visually-hidden;
+  }
+
   &__body {
     position: relative;
     overflow: hidden;
@@ -36,11 +40,11 @@
 
   &__content {
     font-size: 0.875rem;
-    margin: 2rem 0;
+    margin: 1rem 0;
 
     .ocp-map__button-close {
-      font-size: 1.25rem;
-      line-height: 1.25rem;
+      font-size: 0.8rem;
+      line-height: 0.8rem;
       padding: 0;
       margin: 0;
       position: absolute;
@@ -59,10 +63,10 @@
     }
 
     h2 {
-      //@extend .heading--small;
       color: $primary-color;
       font-size: 1.75rem;
       padding-right: 1rem;
+      margin-bottom: 1rem; 
     }
     h3 {
       font-size: 1rem;
@@ -71,9 +75,6 @@
     }
     div {
       margin: 1.25rem 0 1rem 0;
-    }
-    ul, p {
-      //margin-bottom: 1.5rem,
     }
     .godi {
       font-style: italic;
@@ -87,9 +88,11 @@
 
   &__actions {
     background-color: $base-color;
-    padding: 1rem;
+    padding: 0.75rem 0.75rem 0.75rem 1rem;
     color: #fff;
     text-transform: uppercase;
+    font-family: $display-font-family;
+    font-size: 0.8rem;
 
     &-description {
       margin-right: 1rem;
@@ -97,7 +100,12 @@
 
     .drop__menu {
       width: 20rem;
+
+      li {
+        padding: 0;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+      }
     }
   }
 }
-

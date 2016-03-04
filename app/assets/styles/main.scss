@@ -28,58 +28,19 @@
 
 @import "bourbon";
 
-/**
- * Using Jeet, a grid system designed for humans:
- * http://jeet.gs/
- */
-
-@import "jeet/index";
-
-
-/* Reboot
-   ========================================================================== */
-
-@import "normalize";
-@import "reset";
-
-/**
- * Using Kenneth Ormandy's OpenType features—ligatures, kerning, and more—to Normalize.css:
- * https://github.com/kennethormandy/normalize-opentype.css
- */
-
-@import "normalize-opentype";
-
-
 /* Settings
    ========================================================================== */
 
 @import "variables";
-@import "functions";
-@import "mixins";
-
 
 /* Main
    ========================================================================== */
 
 @import "collecticons";
-@import "typography";
-@import "tables";
-// @import "media";
-// @import "skins";
-@import "buttons";
-// @import "forms";
 @import "overlays";
-// @import "modals";
-// @import "panels";
-// @import "views";
-// @import "cards";
-// @import "alerts";
 @import "base";
 @import "widget-map";
 @import "widget-table";
-// @import "pages";
-// @import "animation";
 
 /* Utilities */
-
 @import "utils";

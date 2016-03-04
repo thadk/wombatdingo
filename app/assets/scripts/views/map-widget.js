@@ -377,7 +377,7 @@ var MapWidget = React.createClass({
 
               {this.renderCommitments(country)}
 
-              <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--primary-outline', 'button--small')}>Improve the data</a>
+              <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--small')}>Improve the data</a>
             </div>
             ) : null}
           </div>

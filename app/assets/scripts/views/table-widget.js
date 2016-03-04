@@ -109,7 +109,7 @@ var TableWidget = React.createClass({
           {this.state.fetchingData ? (
             <p>Loading data...</p>
           ) : (
-          <table className='table'>
+          <table className='ocp-table__table'>
             {this.renderTableHead()}
             {this.renderTableBody()}
           </table>

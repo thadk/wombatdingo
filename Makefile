@@ -19,9 +19,12 @@ data/pdf/Vacant\ Buildings_2015\ 2nd\ half\ (dcra.gov).pdf:
 	curl "http://dcra.dc.gov/sites/default/files/dc/sites/dcra/publication/attachments/Vacant%20Buildings_2015%202nd%20half%20%28dcra.gov%29.pdf" -o $@.download
 	mv $@.download $@
 
-#data/csv is created using tabula. In the case of the vacant files, you need to use a formula
+#data/csv is created using tabula 1.10beta1 & excel. In the case of the vacant files, you need to use a formula
 # =CONCATENATE(TEXT(F2,"0000  "),"  ",IF(G2,TEXT(G2,"0000"),""))
 # in order to merge the two halves of the SSL, some of the fields like "PAR 01240117  0000" will need to be pasted with values and edited to remove the 0000's.
+# In blighted, replace " " with "    " for SSL
+# add Blighted = 2 and Vacant = 1 for every row.
+# for vancant, empty ~7 places where SSL is blank besides per page error.
 
 # Owner Poly layer
 data/shp/Owner_Polygons_Common_Ownership_Layer.shp: data/gz/Owner_Polygons_Common_Ownership_Layer.zip
@@ -35,29 +38,60 @@ data/shp/Owner_Polygons_Common_Ownership_Layer.shp: data/gz/Owner_Polygons_Commo
 # Owner Poly layer
 data/json/owners-wVacant.geojson: data/shp/Owner_Polygons_Common_Ownership_Layer.shp
 	mkdir -p $(dir $@)
-	#rm data/json/unmatched-w-vacants.geojson data/json/unjoined-vacants.json data/json/owners-wVacant.geojson
 	mapshaper -i $< \
 	-filter-fields "SSL, ZIP5, ZIP4, STREETNAME, STREETCODE,SHAPEAREA,OBJECTID,ADDRESS1,ADDRESS2,CITYSTZIP,TAXRATE,QDRNTNAME,PREMISEADD,VACLNDUSE" \
-	-join data/csv/vacants.csv keys=SSL,SSLFULL:str unjoined unmatched -o format=geojson $@
+	-join data/csv/vacants.csv keys=SSL,SSLFULL:str fields=GGStatus:num unjoined unmatched -o format=geojson $@
 	mv $(basename $@)2.geojson $(dir $@)unmatched-w-vacants.geojson
 	mv $(basename $@)3.geojson $(dir $@)unjoined-vacants.json
 	mv $(basename $@)1.geojson $@
 
 data/json/owners-wBlighted.geojson: data/json/owners-wVacant.geojson
-	mapshaper -i $< -join data/csv/blighted.csv keys=SSL,SSL:str unjoined -o $@
+	mapshaper -i $< -join data/csv/blighted.csv keys=SSL,SSL:str fields=GGStatus:num sum-fields=GGStatus unjoined -o $@
 	mv $(basename $@)2.geojson $(dir $@)unjoined-w-blighted.geojson
 	mv $(basename $@)1.geojson $@
 
-data/json/quads/%: data/json/owners-wBlighted.geojson
+data/json/owners-wBlighted-target-only.json: data/json/owners-wBlighted.geojson
+	mkdir -p $(dir $@)
+	mapshaper -i $< -filter "$$.properties.GGStatus >= 1" -o format=geojson $@
+
+
+#Single unified TopoJSON of only Blighted/Vacant
+data/topojson/owners-wBlighted-target-only.json: data/json/owners-wBlighted.geojson
+	mkdir -p $(dir $@)
+	mapshaper -i $< -filter "$$.properties.GGStatus >= 1" -o format=topojson $@
+
+#Prep JSON for Quadrant TopoJSON
+data/json/quads/all/%.json: data/json/owners-wBlighted.geojson
 	rm -rf $(dir $@)
 	mkdir -p $(dir $@)
 	mapshaper -i $< -split QDRNTNAME -o format=geojson $(dir $@)
 
-data/topojson/quads/owners-wBlighted-%.json: data/json/quads/owners-wBlighted-$*.json
+data/json/quads/target/%.json: data/json/owners-wBlighted.geojson
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	mapshaper -i $< -filter "$$.properties.GGStatus >= 1" -split QDRNTNAME -o format=geojson $(dir $@)
+
+data/json/quads/other/%.json: data/json/owners-wBlighted.geojson
+	rm -rf $(dir $@)
+	mkdir -p $(dir $@)
+	mapshaper -i $< -filter "$$.properties.GGStatus < 1" -split QDRNTNAME -o format=geojson $(dir $@)
+
+#Create Quadrant TopoJSON
+data/topojson/quads/target/owners-wBlighted-%.json: data/json/quads/target/owners-wBlighted-$*.json
 	mkdir -p $(dir $@)
 	mapshaper -i $(dir $<)owners-wBlighted-$*.json -o cut-table id-field=SSL format=topojson $(dir $@)
 
-quads: data/topojson/quads/owners-wBlighted-NW.json data/topojson/quads/owners-wBlighted-NE.json data/topojson/quads/owners-wBlighted-SW.json data/topojson/quads/owners-wBlighted-SE.json
+data/topojson/quads/other/owners-wBlighted-%.json: data/json/quads/other/owners-wBlighted-$*.json
+	mkdir -p $(dir $@)
+	mapshaper -i $(dir $<)owners-wBlighted-$*.json -o cut-table id-field=SSL format=topojson $(dir $@)
+
+data/topojson/quads/all/owners-wBlighted-%.json: data/json/quads/all/owners-wBlighted-$*.json
+	mkdir -p $(dir $@)
+	mapshaper -i $(dir $<)owners-wBlighted-$*.json -o cut-table id-field=SSL format=topojson $(dir $@)
+
+quads-target: data/topojson/quads/target/owners-wBlighted-NW.json data/topojson/quads/target/owners-wBlighted-NE.json data/topojson/quads/target/owners-wBlighted-SW.json data/topojson/quads/target/owners-wBlighted-SE.json
+quads-other: data/topojson/quads/other/owners-wBlighted-NW.json data/topojson/quads/other/owners-wBlighted-NE.json data/topojson/quads/other/owners-wBlighted-SW.json data/topojson/quads/other/owners-wBlighted-SE.json
+quads: data/topojson/owners-wBlighted-target-only.json quads-target quads-other data/topojson/quads/all/owners-wBlighted-NW.json data/topojson/quads/all/owners-wBlighted-NE.json data/topojson/quads/all/owners-wBlighted-SW.json data/topojson/quads/all/owners-wBlighted-SE.json
 
 
 
@@ -75,5 +109,5 @@ clean: clean-local
 clean-local:
 	rm -rf data/shp data/json data/topojson
 
-clean-json:
-	rm -rf data/json
+#clean-json:
+#	rm -rf data/json

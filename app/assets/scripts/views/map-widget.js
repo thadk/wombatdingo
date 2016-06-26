@@ -8,8 +8,9 @@ import _ from 'lodash';
 import omnivore from 'leaflet-omnivore';
 import Dropdown from '../components/dropdown';
 
-const mapTopoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 const godiScores = 'http://index.okfn.org/api/entries.json';
+const mapTopoJSON = '/assets/topojson/owners-wBlighted-target-only.json';
+//const mapTopoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 const godiSlugs = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
@@ -179,14 +180,20 @@ var MapWidget = React.createClass({
 
   setCountryStyle: function (layer) {
     // Invalid.
-    if (!layer.feature.properties.has_data) {
-      layer.setStyle(this.layerStyles.nodata);
+    if (!layer.feature.properties.GGStatus) {
+      layer.setStyle(this.layerStyles.active);
       return;
     }
 
     // Active layer.
-    if (layer.feature.properties.iso_a2 === _.get(this.state.activeCountryProperties, 'iso_a2', '')) {
-      layer.setStyle(this.layerStyles.active);
+    if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
+      layer.setStyle(this.layerStyles.blue);
+      return;
+    }
+
+    // Active layer.
+    if (layer.feature.properties.GGStatus === 5) {
+      layer.setStyle(this.layerStyles.teal);
       return;
     }
 
@@ -251,10 +258,18 @@ var MapWidget = React.createClass({
   },
 
   setupMap: function () {
-    var map = L.map(this.refs.mapHolder).setView([51.505, -0.09], 2);
+    var map = L.map(this.refs.mapHolder).setView([ 38.9072,-77.0369], 13);
+    var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+      attribution: '<a href="https://www.mapzen.com/rights">Attribution.</a>. Data &copy;<a href="https://openstreetmap.org/copyright">OSM</a> contributors.'
+    });
+
+
+  	map.addLayer(layer);
+
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
+
   },
 
   renderGodi: function (country) {
@@ -339,7 +354,7 @@ var MapWidget = React.createClass({
     return (
       <section className='ocp-map'>
         <header className='ocp-map__header'>
-          <h1 className='ocp-map__title'>Open Contracting Map</h1>
+          <h1 className='ocp-map__title'>GGWash Vacant/Blight Map</h1>
           <div className='ocp-map__actions'>
             <span className='ocp-map__actions-description'>View by:</span>
 
@@ -363,24 +378,6 @@ var MapWidget = React.createClass({
         </header>
         <div className='ocp-map__body'>
           <div className='ocp-map__map' ref='mapHolder'>{/* Map renders here */}</div>
-          <div className={classnames('ocp-map__content-wrapper', {'ocp-revealed': country !== null})}>
-            {country !== null ? (
-            <div className='ocp-map__content'>
-              <a href='#' className='ocp-map__button-close' onClick={this.closeClickHandler}><span>Close map content</span></a>
-              <h2>{country.name}</h2>
-
-              {this.renderGodi(country)}
-
-              {this.renderPublisher(country.publishers)}
-
-              {this.renderInnovations(country.innovations)}
-
-              {this.renderCommitments(country)}
-
-              <a href={'http://survey.open-contracting.org/#/forms/oc-status/' + country.iso_a2.toLowerCase()} target='_blank' className={classnames('ocp-map__content-link', 'button', 'button--small')}>Improve the data</a>
-            </div>
-            ) : null}
-          </div>
         </div>
       </section>
     );

@@ -84,7 +84,7 @@ gulp.task('clean', function () {
     });
 });
 
-gulp.task('build', ['vendorScripts', 'javascript', 'collecticons'], function () {
+gulp.task('build', ['vendorScripts', 'javascript', 'collecticons', 'topojson'], function () {
   gulp.start(['html', 'images', 'fonts', 'extras'], function () {
     return gulp.src('dist/**/*')
       .pipe($.size({title: 'build', gzip: true}))

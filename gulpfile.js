@@ -54,7 +54,7 @@ gulp.task('default', ['clean'], function () {
   gulp.start('build');
 });
 
-gulp.task('serve', ['vendorScripts', 'javascript', 'styles', 'fonts','topojson'], function () {
+gulp.task('serve', ['vendorScripts', 'javascript', 'styles', 'fonts','images','topojson'], function () {
   browserSync({
     port: 3000,
     server: {
@@ -240,6 +240,12 @@ gulp.task('fonts', function () {
   return gulp.src('app/assets/fonts/**/*')
     .pipe(gulp.dest('.tmp/assets/fonts'))
     .pipe(gulp.dest('dist/assets/fonts'));
+});
+
+gulp.task('images', function () {
+  return gulp.src('app/assets/images/**/*')
+    .pipe(gulp.dest('.tmp/assets/images/'))
+    .pipe(gulp.dest('dist/assets/images/'));
 });
 
 gulp.task('topojson', function () {

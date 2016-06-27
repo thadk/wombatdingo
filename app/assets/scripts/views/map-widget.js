@@ -10,14 +10,17 @@ import Dropdown from '../components/dropdown';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
 const mapTopoJSON = '/assets/topojson/owners-wBlighted-target-only.json';
+const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
+// const mapTopoSW = '/assets/topojson/quads/other/owners-wBlighted-SW.json';
+// const mapTopoSE = '/assets/topojson/quads/other/owners-wBlighted-SE.json';
+// const mapTopoNE = '/assets/topojson/quads/other/owners-wBlighted-NE.json';
+// const mapTopoNW = '/assets/topojson/quads/other/owners-wBlighted-NW.json';
 //const mapTopoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
 const godiSlugs = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
-  all: 'Everything',
-  ocds: 'OCDS',
-  commitments: 'OGP Relevant commitments',
-  contracts: 'Publishing contracts'
+  all: 'See DC-designated Vacants & Blighted Properties',
+  contribute: 'Contribute Vacant/Blighted'
 };
 
 const ocdsMatrix = {
@@ -102,6 +105,10 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       mapTopoJSON: null,
+      mapTopoSW: null,
+      mapTopoSE: null,
+      mapTopoNW: null,
+      mapTopoNE: null,
       godiScores: null,
       godiData: null,
       godiPlaces: null,
@@ -120,35 +127,71 @@ var MapWidget = React.createClass({
           throw new Error('Bad response');
         }
         return response.json();
-      }),
-
-      fetch(godiScores)
-      .then(response => {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
-      }),
-
-      fetch(godiSlugs)
-      .then(response => {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
       })
+      //
+      // fetch(mapTopoSW)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // }),
+      //
+      // fetch(mapTopoSE)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // }),
+      //
+      // fetch(mapTopoNW)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // }),
+      //
+      // fetch(mapTopoNE)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // }),
+
+      // fetch(godiScores)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // }),
+      //
+      // fetch(godiSlugs)
+      // .then(response => {
+      //   if (response.status >= 400) {
+      //     throw new Error('Bad response');
+      //   }
+      //   return response.json();
+      // })
     ])
     .then(data => {
-      let countryData = data[0];
-      let godiResults = data[1];
-      let godiPlaceData = data[2];
+      let coreData = data[0];
+      let plotsSW = data[1];
+      let plotsSE = data[2];
+      let plotsNW = data[3];
+      let plotsNE = data[4];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
-        mapTopoJSON: countryData,
-        godiData: godiResults,
-        godiPlaces: godiPlaceData
+        mapTopoJSON: coreData,
+        mapTopoSW: plotsSW,
+        mapTopoSE: plotsSE,
+        mapTopoNW: plotsNW,
+        mapTopoNE: plotsNE
       });
       this.setupMap();
     });
@@ -230,7 +273,7 @@ var MapWidget = React.createClass({
 
     layer
       .on('click', e => {
-        if (!layer.feature.properties.has_data) {
+        if (!layer.feature.properties.GGStatus) {
           return;
         }
         this.setState({
@@ -238,7 +281,7 @@ var MapWidget = React.createClass({
         });
       })
       .on('mousemove', e => {
-        if (!layer.feature.properties.has_data) {
+        if (!layer.feature.properties.GGStatus) {
           return;
         }
         // Don't act on the selected layer.
@@ -247,7 +290,7 @@ var MapWidget = React.createClass({
         }
       })
       .on('mouseout', e => {
-        if (!layer.feature.properties.has_data) {
+        if (!layer.feature.properties.GGStatus) {
           return;
         }
         // Don't act on the selected layer.
@@ -258,14 +301,82 @@ var MapWidget = React.createClass({
   },
 
   setupMap: function () {
-    var map = L.map(this.refs.mapHolder).setView([ 38.9072,-77.0369], 13);
+    var map = L.map(this.refs.mapHolder).setView([ 38.9072,-77.0069], 13);
     var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
       attribution: '<a href="https://www.mapzen.com/rights">Attribution.</a>. Data &copy;<a href="https://openstreetmap.org/copyright">OSM</a> contributors.'
     });
 
+    var info = L.control({position: 'bottomleft'});
+
+    info.onAdd = function (map) {
+        this._div = L.DomUtil.create('div', 'info legend'); // create a div with a class "info"
+        this.update();
+        return this._div;
+    };
+
+    // method that we will use to update the control based on feature properties passed
+    info.update = function (props) {
+        this._div.innerHTML = '<h4>DC Properties</h4>'
+        + '<img src="assets/images/Vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
+        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted <br>'
+        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> Users'
+        ;
+    };
+
+
+    info.addTo(map);
+
+    function searchByAjax(text, callResponse)//callback for 3rd party ajax requests
+    {
+
+      return Promise.all([
+        fetch(geocodeEndpoint,{
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            str: text,
+            f: 'json',
+          })
+        })
+        .then(response => {
+          if (response.status >= 400) {
+            throw new Error('Bad response');
+          }
+          return response.json();
+        })
+      ])
+      .then(data => {
+        let passThrough = [];
+        if (data[0].returnDataset && data[0].returnDataset.Table1) {
+          passThrough = data[0].returnDataset.Table1.map(n => ({loc: [n.LATITUDE,n.LONGITUDE], title: n.FULLADDRESS, SSL: n.SSL}) )
+        }
+        callResponse(passThrough);
+      });
+
+    }
+
+    map.addControl( new L.Control.Search({
+      sourceData: searchByAjax,
+      text:'Color...',
+      markerLocation: true,
+      circleLocation: false,
+      markerIcon: new L.Icon({iconUrl:'assets/images/marker-icon-highlight.png', iconSize: [25,41]})
+    }) );
+
+    // L.control.search({
+  	// 	url: 'http://citizenatlas.dc.gov/newwebservices/locationverifier.asmx/findLocation2?str={s}',
+  	// 	textPlaceholder: 'Color...',
+  	// 	collapsed: false,
+  	// 	markerLocation: true,
+  	// 	markerIcon: new L.Icon({iconUrl:'data/custom-icon.png', iconSize: [20,20]})
+  	// }).addTo(map);
+
+
 
   	map.addLayer(layer);
-
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
@@ -320,6 +431,26 @@ var MapWidget = React.createClass({
 
     return <div><h3>Innovations in contract monitoring and data use</h3><ul>{content}</ul></div>;
   },
+  renderGGWash: function (plot) {
+
+    var statusList = [];
+    if (plot.GGStatus % 5 === 0 || plot.GGStatus === 12 ) {
+      var vacant = 'Was marked as Vacant by DC in late 2015';
+      statusList.push(<li key="vacant">{vacant}</li>);
+    } else if (plot.GGStatus % 7 === 0 ) {
+      var blighted = 'Was marked as Blighted by DC in late 2015';
+      statusList.push(<li key="blighted">{blighted}</li>);
+    }
+
+    statusList.push(<li key="addy">Address: {plot.PREMISEADD}</li>);
+
+    return <div><h3>Vacant/Blighted Property</h3>
+    <ul>
+      {statusList}
+    </ul>
+    </div>;
+  },
+
 
   renderCommitments: function (country) {
     if (!(country.ogp_commitments.length) && (!(country.commitment_oil_mining) || country.commitment_oil_mining === 'none')) {
@@ -349,14 +480,14 @@ var MapWidget = React.createClass({
       return null;
     }
 
-    let country = this.state.activeCountryProperties;
+    let plot = this.state.activeCountryProperties;
 
     return (
       <section className='ocp-map'>
         <header className='ocp-map__header'>
           <h1 className='ocp-map__title'>GGWash Vacant/Blight Map</h1>
           <div className='ocp-map__actions'>
-            <span className='ocp-map__actions-description'>View by:</span>
+            <span className='ocp-map__actions-description'>View to:</span>
 
             <Dropdown element='span' className='drop drop--down drop--align-left'
               triggerTitle='View map by'
@@ -378,6 +509,14 @@ var MapWidget = React.createClass({
         </header>
         <div className='ocp-map__body'>
           <div className='ocp-map__map' ref='mapHolder'>{/* Map renders here */}</div>
+          <div className={classnames('ocp-map__content-wrapper', {'ocp-revealed': plot !== null})}>
+            {plot !== null ? (
+            <div className='ocp-map__content'>
+              <a href='#' className='ocp-map__button-close' onClick={this.closeClickHandler}><span>Close map content</span></a>
+              {this.renderGGWash(plot)}
+            </div>
+            ) : null}
+          </div>
         </div>
       </section>
     );

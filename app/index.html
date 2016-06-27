@@ -17,6 +17,8 @@
     <!-- build:css assets/styles/main.css -->
     <link rel="stylesheet" href="assets/styles/main.css">
     <!-- endbuild -->
+    <!--link rel="stylesheet" href="assets/styles/leaflet-search.mobile.min.css"-->
+    <link rel="stylesheet" href="assets/styles/leaflet-search.min.css"/>
     <link rel="author" type="text/plain" href="humans.txt" />
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.3/modernizr.min.js"></script>
@@ -39,7 +41,7 @@
 
     <div id="site-canvas">
         <div class="oc-map--map-widget"></div>
-        <div class="oc-map--table-widget"></div>
+        <!--div class="oc-map--table-widget"></div-->
     </div>
 
     <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
@@ -58,6 +60,9 @@
     <!-- build:js assets/scripts/bundle.js -->
     <script src="assets/scripts/bundle.js"></script>
     <!-- endbuild -->
+
+    <script src="/assets/scripts/leaflet-search.min.js"></script>
+
 
     <script>
       OC_MAP.initMapWidget(document.querySelector('.oc-map--map-widget'));

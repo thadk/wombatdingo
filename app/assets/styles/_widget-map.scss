@@ -14,6 +14,12 @@
 
   &__map {
     min-height: 500px;
+
+    & .info.legend {
+      opacity: 1;
+      background-color: #FFF;
+      padding: 8px;
+    }
   }
 
   &__content-wrapper {
@@ -66,7 +72,7 @@
       color: $primary-color;
       font-size: 1.75rem;
       padding-right: 1rem;
-      margin-bottom: 1rem; 
+      margin-bottom: 1rem;
     }
     h3 {
       font-size: 1rem;
@@ -79,12 +85,14 @@
     .godi {
       font-style: italic;
       margin-top: -0.5rem;
-    } 
+    }
     &-link {
       font-size: 0.875rem;
       margin-top: 1rem;
     }
   }
+
+
 
   &__actions {
     background-color: $base-color;

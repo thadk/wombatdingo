@@ -9,7 +9,8 @@ import omnivore from 'leaflet-omnivore';
 import Dropdown from '../components/dropdown';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
-const mapTopoJSON = '/assets/topojson/owners-wBlighted-target-only.json';
+const mapTopoJSON = 'assets/topojson/owners-wBlighted-target-only.json';
+const userEditsTopoJSON = 'assets/topojson/fake-user-edits-NE.json';
 const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
 // const mapTopoSW = '/assets/topojson/quads/other/owners-wBlighted-SW.json';
 // const mapTopoSE = '/assets/topojson/quads/other/owners-wBlighted-SE.json';
@@ -127,16 +128,16 @@ var MapWidget = React.createClass({
           throw new Error('Bad response');
         }
         return response.json();
+      }),
+
+      fetch(userEditsTopoJSON)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
       })
-      //
-      // fetch(mapTopoSW)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // }),
-      //
+
       // fetch(mapTopoSE)
       // .then(response => {
       //   if (response.status >= 400) {
@@ -179,19 +180,13 @@ var MapWidget = React.createClass({
     ])
     .then(data => {
       let coreData = data[0];
-      let plotsSW = data[1];
-      let plotsSE = data[2];
-      let plotsNW = data[3];
-      let plotsNE = data[4];
+      let userEdits = data[1];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
         mapTopoJSON: coreData,
-        mapTopoSW: plotsSW,
-        mapTopoSE: plotsSE,
-        mapTopoNW: plotsNW,
-        mapTopoNE: plotsNE
+        userEditsTopoJSON: userEdits
       });
       this.setupMap();
     });
@@ -317,7 +312,7 @@ var MapWidget = React.createClass({
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
         this._div.innerHTML = '<h4>DC Properties</h4>'
-        + '<img src="assets/images/Vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
+        + '<img src="assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
         + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted <br>'
         + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> Users'
         ;
@@ -366,18 +361,14 @@ var MapWidget = React.createClass({
       markerIcon: new L.Icon({iconUrl:'assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );
 
-    // L.control.search({
-  	// 	url: 'http://citizenatlas.dc.gov/newwebservices/locationverifier.asmx/findLocation2?str={s}',
-  	// 	textPlaceholder: 'Color...',
-  	// 	collapsed: false,
-  	// 	markerLocation: true,
-  	// 	markerIcon: new L.Icon({iconUrl:'data/custom-icon.png', iconSize: [20,20]})
-  	// }).addTo(map);
-
-
 
   	map.addLayer(layer);
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
+      .eachLayer(this.onEachLayer)
+      .addTo(map);
+
+  	map.addLayer(layer);
+    this.mapUserLayer = omnivore.topojson.parse(this.state.userEditsTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
 

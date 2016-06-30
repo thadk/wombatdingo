@@ -60,6 +60,10 @@ data/topojson/owners-wBlighted-target-only.json: data/json/owners-wBlighted.geoj
 	mkdir -p $(dir $@)
 	mapshaper -i $< -filter "$$.properties.GGStatus >= 1" -o format=topojson $@
 
+data/topojson/fake-user-edits-NE.json: data/json/fake-user-edits-NE.geojson
+	mkdir -p $(dir $@)
+	mapshaper -i $< -filter "$$.properties.GGStatus >= 1" -o format=topojson $@
+
 #Prep JSON for Quadrant TopoJSON
 data/json/quads/all/%.json: data/json/owners-wBlighted.geojson
 	rm -rf $(dir $@)

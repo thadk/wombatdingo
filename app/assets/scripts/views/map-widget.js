@@ -7,10 +7,13 @@ import classnames from 'classnames';
 import _ from 'lodash';
 import omnivore from 'leaflet-omnivore';
 import Dropdown from '../components/dropdown';
+import LeafletSearch from 'leaflet-search';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
 const mapTopoJSON = 'assets/topojson/owners-wBlighted-target-only.json';
 const userEditsTopoJSON = 'assets/topojson/fake-user-edits-NE.json';
+const dcBoundaryTopoJSON = 'assets/topojson/DC_Boundary_Lines.json';
+const wardBoundaryTopoJSON = 'assets/topojson/DC_Ward_Boundary_Lines.json';
 const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
 // const mapTopoSW = '/assets/topojson/quads/other/owners-wBlighted-SW.json';
 // const mapTopoSE = '/assets/topojson/quads/other/owners-wBlighted-SE.json';
@@ -30,6 +33,9 @@ const ocdsMatrix = {
   ocds_ongoing_data: 'ongoing data'
 };
 
+  /* GGWASH colors:
+  rgb(149, 172, 156) grey
+  green rgb(10, 146, 48) */
 var MapWidget = React.createClass({
   displayName: 'MapWidget',
 
@@ -42,6 +48,34 @@ var MapWidget = React.createClass({
       opacity: 1,
       fillOpacity: 1,
       fillColor: '#B5B5B5'
+    },
+    ggwashGreyGreen: {
+      color: '#95ac9c',
+      weight: 3,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#0a9230'
+    },
+    ggwashGreenGrey: {
+      color: '#0a9230',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#95ac9c'
+    },
+    vacant: {
+      color: '#C3670D',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#C3670D'
+    },
+    blighted: {
+      color: '#A30B53',
+      weight: 1,
+      opacity: 1,
+      fillOpacity: 1,
+      fillColor: '#A30B53'
     },
     nodata: {
       color: '#E3E3E3',
@@ -58,11 +92,11 @@ var MapWidget = React.createClass({
       fillColor: '#C2DC16'
     },
     active: {
-      color: '#C2DC16',
+      color: '#65ff11',
       weight: 1,
       opacity: 1,
       fillOpacity: 1,
-      fillColor: '#C2DC16'
+      fillColor: '#65ff11'
     },
     lilac: {
       color: '#6C75E1',
@@ -106,6 +140,8 @@ var MapWidget = React.createClass({
       fetchedData: false,
       fetchingData: false,
       mapTopoJSON: null,
+      dcBoundaryTopoJSON: null,
+      userEditsTopoJSON, null,
       mapTopoSW: null,
       mapTopoSE: null,
       mapTopoNW: null,
@@ -131,6 +167,22 @@ var MapWidget = React.createClass({
       }),
 
       fetch(userEditsTopoJSON)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      }),
+
+      fetch(dcBoundaryTopoJSON)
+      .then(response => {
+        if (response.status >= 400) {
+          throw new Error('Bad response');
+        }
+        return response.json();
+      }),
+
+      fetch(wardBoundaryTopoJSON)
       .then(response => {
         if (response.status >= 400) {
           throw new Error('Bad response');
@@ -181,12 +233,16 @@ var MapWidget = React.createClass({
     .then(data => {
       let coreData = data[0];
       let userEdits = data[1];
+      let dcBoundLines = data[2];
+      let wardBoundLines = data[3];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
         mapTopoJSON: coreData,
-        userEditsTopoJSON: userEdits
+        userEditsTopoJSON: userEdits,
+        dcBoundaryTopoJSON: dcBoundLines,
+        wardBoundaryTopoJSON: wardBoundLines
       });
       this.setupMap();
     });
@@ -217,21 +273,33 @@ var MapWidget = React.createClass({
   },
 
   setCountryStyle: function (layer) {
+    // Outer Boundary.
+    if (layer.feature.properties.TYPE === 1) {
+      layer.setStyle(this.layerStyles.ggwashGreyGreen);
+      return;
+    }
+
+    // Inner Boundary.
+    if (layer.feature.properties.TYPE === 0) {
+      layer.setStyle(this.layerStyles.ggwashGreenGrey);
+      return;
+    }
+
     // Invalid.
     if (!layer.feature.properties.GGStatus) {
       layer.setStyle(this.layerStyles.active);
       return;
     }
 
-    // Active layer.
+    //
     if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
-      layer.setStyle(this.layerStyles.blue);
+      layer.setStyle(this.layerStyles.blighted);
       return;
     }
 
-    // Active layer.
+    //
     if (layer.feature.properties.GGStatus === 5) {
-      layer.setStyle(this.layerStyles.teal);
+      layer.setStyle(this.layerStyles.vacant);
       return;
     }
 
@@ -300,6 +368,9 @@ var MapWidget = React.createClass({
     var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
       attribution: '<a href="https://www.mapzen.com/rights">Attribution.</a>. Data &copy;<a href="https://openstreetmap.org/copyright">OSM</a> contributors.'
     });
+    map.addLayer(layer);
+
+
 
     var info = L.control({position: 'bottomleft'});
 
@@ -361,67 +432,72 @@ var MapWidget = React.createClass({
       markerIcon: new L.Icon({iconUrl:'assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );
 
+    this.wardBoundaryLayer = omnivore.topojson.parse(this.state.wardBoundaryTopoJSON)
+      .eachLayer(this.onEachLayer)
+      .addTo(map);
 
-  	map.addLayer(layer);
+    this.dcBoundaryLayer = omnivore.topojson.parse(this.state.dcBoundaryTopoJSON)
+      .eachLayer(this.onEachLayer)
+      .addTo(map);
+
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
 
-  	map.addLayer(layer);
     this.mapUserLayer = omnivore.topojson.parse(this.state.userEditsTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
 
   },
 
-  renderGodi: function (country) {
-    let godi = this.state.godiData;
-    let countryGodi = null;
-    let godiPlaces = this.state.godiPlaces;
-    let countryMeta = null;
+  // renderGodi: function (country) {
+  //   let godi = this.state.godiData;
+  //   let countryGodi = null;
+  //   let godiPlaces = this.state.godiPlaces;
+  //   let countryMeta = null;
+  //
+  //   countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
+  //   countryMeta = _.find(godiPlaces, {'id': country.iso_a2.toLowerCase()});
+  //
+  //   if (!countryGodi || !countryMeta) {
+  //     return;
+  //   }
+  //   return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryMeta.slug} target='_blank'>{countryGodi.score}%</a></p>;
+  // },
 
-    countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
-    countryMeta = _.find(godiPlaces, {'id': country.iso_a2.toLowerCase()});
-
-    if (!countryGodi || !countryMeta) {
-      return;
-    }
-    return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryMeta.slug} target='_blank'>{countryGodi.score}%</a></p>;
-  },
-
-  renderPublisher: function (publishers) {
-    if (!publishers.length) {
-      return <div><h3>Publishing open contracting data</h3><p>No entity publishing data yet</p></div>;
-    }
-
-    let content = _.map(publishers, (o, i) => {
-      var status = [];
-      _.forEach(ocdsMatrix, (str, idx) => {
-        if (o[idx]) { status.push(str); }
-      });
-      var statusStr = status.join(', ');
-      return (
-        <li key={i}><a href={o.publisher_link} target='_blank'>{o.publisher}</a>:
-          {statusStr ? <span> {statusStr}</span> : null}
-        </li>
-      );
-    });
-    return <div><h3>Publishing open contracting data</h3><ul>{content}</ul></div>;
-  },
-
-  renderInnovations: function (innovations) {
-    if (!innovations.length) {
-      return;
-    }
-
-    let content = _.map(innovations, (o, i) => {
-      return (
-        <li key={i}><a href={o.innovation_link} target='_blank'>{o.innovation_description}</a></li>
-      );
-    });
-
-    return <div><h3>Innovations in contract monitoring and data use</h3><ul>{content}</ul></div>;
-  },
+  // renderPublisher: function (publishers) {
+  //   if (!publishers.length) {
+  //     return <div><h3>Publishing open contracting data</h3><p>No entity publishing data yet</p></div>;
+  //   }
+  //
+  //   let content = _.map(publishers, (o, i) => {
+  //     var status = [];
+  //     _.forEach(ocdsMatrix, (str, idx) => {
+  //       if (o[idx]) { status.push(str); }
+  //     });
+  //     var statusStr = status.join(', ');
+  //     return (
+  //       <li key={i}><a href={o.publisher_link} target='_blank'>{o.publisher}</a>:
+  //         {statusStr ? <span> {statusStr}</span> : null}
+  //       </li>
+  //     );
+  //   });
+  //   return <div><h3>Publishing open contracting data</h3><ul>{content}</ul></div>;
+  // },
+  //
+  // renderInnovations: function (innovations) {
+  //   if (!innovations.length) {
+  //     return;
+  //   }
+  //
+  //   let content = _.map(innovations, (o, i) => {
+  //     return (
+  //       <li key={i}><a href={o.innovation_link} target='_blank'>{o.innovation_description}</a></li>
+  //     );
+  //   });
+  //
+  //   return <div><h3>Innovations in contract monitoring and data use</h3><ul>{content}</ul></div>;
+  // },
   renderGGWash: function (plot) {
 
     var statusList = [];
@@ -443,28 +519,28 @@ var MapWidget = React.createClass({
   },
 
 
-  renderCommitments: function (country) {
-    if (!(country.ogp_commitments.length) && (!(country.commitment_oil_mining) || country.commitment_oil_mining === 'none')) {
-      return;
-    }
-
-    let content_ogp = _.map(country.ogp_commitments, (o, i) => {
-      return (
-        <li key={i}>OGP: <a href={o.ogp_commitment_link} target='_blank'>{o.ogp_commitment}</a></li>
-      );
-    });
-
-    let content;
-    if (country.commitment_oil_mining) {
-      if (country.commitment_oil_mining) {
-        content = <li>Oil and Mining: <a href={country.commitment_oil_mining_link} target='_blank'>{country.commitment_oil_mining}</a></li>;
-      } else {
-        content = <li>Oil and Mining: {country.commitment_oil_mining}</li>;
-      }
-    }
-
-    return <div><h3>Commitments</h3><ul>{content_ogp}{content}</ul></div>;
-  },
+  // renderCommitments: function (country) {
+  //   if (!(country.ogp_commitments.length) && (!(country.commitment_oil_mining) || country.commitment_oil_mining === 'none')) {
+  //     return;
+  //   }
+  //
+  //   let content_ogp = _.map(country.ogp_commitments, (o, i) => {
+  //     return (
+  //       <li key={i}>OGP: <a href={o.ogp_commitment_link} target='_blank'>{o.ogp_commitment}</a></li>
+  //     );
+  //   });
+  //
+  //   let content;
+  //   if (country.commitment_oil_mining) {
+  //     if (country.commitment_oil_mining) {
+  //       content = <li>Oil and Mining: <a href={country.commitment_oil_mining_link} target='_blank'>{country.commitment_oil_mining}</a></li>;
+  //     } else {
+  //       content = <li>Oil and Mining: {country.commitment_oil_mining}</li>;
+  //     }
+  //   }
+  //
+  //   return <div><h3>Commitments</h3><ul>{content_ogp}{content}</ul></div>;
+  // },
 
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {

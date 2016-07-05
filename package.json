@@ -84,10 +84,15 @@
     "isomorphic-fetch": "^2.2.1",
     "leaflet": "^0.7.7",
     "leaflet-omnivore": "^0.3.2",
+    "leaflet-search": "^1.9.8",
     "lodash": "^4.2.1",
     "ramda": "^0.19.1",
     "react": "^0.14.7",
-    "leaflet-search": "^1.9.8",
-    "react-dom": "^0.14.7"
+    "react-dom": "^0.14.7",
+    "topojson": "^1.6.26",
+    "turf-bbox-polygon": "^3.0.10",
+    "turf-centroid": "^3.0.10",
+    "turf-featurecollection": "^1.0.1",
+    "turf-within": "^3.0.10"
   }
 }

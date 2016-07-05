@@ -8,6 +8,10 @@ import _ from 'lodash';
 import omnivore from 'leaflet-omnivore';
 import Dropdown from '../components/dropdown';
 import LeafletSearch from 'leaflet-search';
+import turfBboxPolygon from 'turf-bbox-polygon';
+import turfCentroid from 'turf-centroid';
+import turfWithin from 'turf-within';
+import turfFeaturecollection from 'turf-featurecollection';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
 const mapTopoJSON = 'assets/topojson/owners-wBlighted-target-only.json';
@@ -23,7 +27,7 @@ const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
 const godiSlugs = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
-  all: 'See DC-designated Vacants & Blighted Properties',
+  all: 'See Properties',
   contribute: 'Contribute Vacant/Blighted'
 };
 
@@ -76,6 +80,13 @@ var MapWidget = React.createClass({
       opacity: 1,
       fillOpacity: 1,
       fillColor: '#A30B53'
+    },
+    userVacant: {
+      color: '#FF9F41',
+      weight: 1,
+      opacity: 0.1,
+      fillOpacity: 1,
+      fillColor: '#FF9F41'
     },
     nodata: {
       color: '#E3E3E3',
@@ -149,6 +160,8 @@ var MapWidget = React.createClass({
       godiScores: null,
       godiData: null,
       godiPlaces: null,
+      featureCount: 801,
+      featureCountTotal: 1212,
       activeCountryProperties: null,
       viewFilter: 'all'
     };
@@ -291,15 +304,21 @@ var MapWidget = React.createClass({
       return;
     }
 
-    //
+    // Blighted (or both)
     if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
       layer.setStyle(this.layerStyles.blighted);
       return;
     }
 
-    //
+    // Vacant
     if (layer.feature.properties.GGStatus === 5) {
       layer.setStyle(this.layerStyles.vacant);
+      return;
+    }
+
+    // User generated vacant
+    if (layer.feature.properties.GGStatus === 9) {
+      layer.setStyle(this.layerStyles.userVacant);
       return;
     }
 
@@ -370,6 +389,31 @@ var MapWidget = React.createClass({
     });
     map.addLayer(layer);
 
+    map.on('move', e => {
+      let featureColl = this.state.mapGeoJSON;
+      let bounds = e.target.getBounds();
+
+      // [xLow, yLow, xHigh, yHigh]
+      let boundsArray = [bounds._southWest.lng, bounds._southWest.lat ,bounds._northEast.lng ,bounds._northEast.lat];
+      // import turfBboxPolygon from 'turf-bbox-polygon';
+      // import turfWithin from 'turf-within';
+      // import turfCentroid from 'turf-centroid';
+      let turfBBoxPoly = turfFeaturecollection([turfBboxPolygon(boundsArray)]);
+      // debugger;
+      let centroidsOfFeatures = turfFeaturecollection(
+        featureColl.features.map((o, i) => {
+           return (turfCentroid(o));
+         })
+       );
+      let visiblePolyCentroids = turfWithin(centroidsOfFeatures,turfBBoxPoly);
+
+
+      this.setState({
+        featureCount: visiblePolyCentroids.features.length,
+        featureCountTotal: centroidsOfFeatures.features.length
+      });
+    });
+
 
 
     var info = L.control({position: 'bottomleft'});
@@ -383,9 +427,10 @@ var MapWidget = React.createClass({
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
         this._div.innerHTML = '<h4>DC Properties</h4>'
+        + '<img src="assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
+        + '<img src="assets/images/user.png" style="width: 10px; height: 10px"/> Users <br/>'
         + '<img src="assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
-        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted <br>'
-        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> Users'
+        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
         ;
     };
 
@@ -443,6 +488,10 @@ var MapWidget = React.createClass({
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
       .eachLayer(this.onEachLayer)
       .addTo(map);
+
+    this.setState({
+      mapGeoJSON: this.mapCountryLayer.toGeoJSON()
+    });
 
     this.mapUserLayer = omnivore.topojson.parse(this.state.userEditsTopoJSON)
       .eachLayer(this.onEachLayer)
@@ -554,6 +603,9 @@ var MapWidget = React.createClass({
         <header className='ocp-map__header'>
           <h1 className='ocp-map__title'>GGWash Vacant/Blight Map</h1>
           <div className='ocp-map__actions'>
+          <div className="pull-right">
+            {this.state.featureCount} of {this.state.featureCountTotal} showing
+          </div>
             <span className='ocp-map__actions-description'>View to:</span>
 
             <Dropdown element='span' className='drop drop--down drop--align-left'

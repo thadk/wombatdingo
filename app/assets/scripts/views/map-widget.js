@@ -16,7 +16,6 @@ import turfFeaturecollection from 'turf-featurecollection';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
 const mapTopoJSON = 'assets/topojson/owners-wBlighted-target-only.json';
-const userEditsTopoJSON = 'assets/topojson/fake-user-edits-NE.json';
 const dcBoundaryTopoJSON = 'assets/topojson/DC_Boundary_Lines.json';
 const wardBoundaryTopoJSON = 'assets/topojson/DC_Ward_Boundary_Lines.json';
 const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
@@ -28,8 +27,7 @@ const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
 const godiSlugs = 'http://index.okfn.org/api/places.json';
 
 const viewFilterMatrix = {
-  all: 'See Properties ˃˃',
-  contribute: 'Contribute Vacant/Blighted ˃˃'
+  all: 'See Properties ˃˃'
 };
 
 const ocdsMatrix = {
@@ -155,7 +153,6 @@ var MapWidget = React.createClass({
       mapExtractedGeoJSON: null,
       mapCentroidsOfFeatures: null,
       dcBoundaryTopoJSON: null,
-      userEditsTopoJSON, null,
       mapTopoSW: null,
       mapTopoSE: null,
       mapTopoNW: null,
@@ -175,14 +172,6 @@ var MapWidget = React.createClass({
 
     Promise.all([
       fetch(mapTopoJSON)
-      .then(response => {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
-      }),
-
-      fetch(userEditsTopoJSON)
       .then(response => {
         if (response.status >= 400) {
           throw new Error('Bad response');
@@ -248,15 +237,13 @@ var MapWidget = React.createClass({
     ])
     .then(data => {
       let coreData = data[0];
-      let userEdits = data[1];
-      let dcBoundLines = data[2];
-      let wardBoundLines = data[3];
+      let dcBoundLines = data[1];
+      let wardBoundLines = data[2];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
         mapTopoJSON: coreData,
-        userEditsTopoJSON: userEdits,
         dcBoundaryTopoJSON: dcBoundLines,
         wardBoundaryTopoJSON: wardBoundLines
       });
@@ -385,7 +372,17 @@ var MapWidget = React.createClass({
       });
   },
   onMoveMap: function (e) {
+    let centroidsOfFeatures = this.state.mapCentroidsOfFeatures;
+    let bounds = e.target.getBounds();
+    // [xLow, yLow, xHigh, yHigh]
+    let boundsArray = [bounds._southWest.lng, bounds._southWest.lat ,bounds._northEast.lng ,bounds._northEast.lat];
+    let turfBBoxPoly = turfFeaturecollection([turfBboxPolygon(boundsArray)]);
+    let visiblePolyCentroids = turfWithin(centroidsOfFeatures,turfBBoxPoly);
 
+    this.setState({
+      featureCount: visiblePolyCentroids.features.length,
+      featureCountTotal: centroidsOfFeatures.features.length
+    });
   },
 
   setupMap: function () {
@@ -395,21 +392,7 @@ var MapWidget = React.createClass({
     });
     map.addLayer(layer);
 
-    map.on('move', e => {
-      let centroidsOfFeatures = this.state.mapCentroidsOfFeatures;
-      let bounds = e.target.getBounds();
-      // [xLow, yLow, xHigh, yHigh]
-      let boundsArray = [bounds._southWest.lng, bounds._southWest.lat ,bounds._northEast.lng ,bounds._northEast.lat];
-      let turfBBoxPoly = turfFeaturecollection([turfBboxPolygon(boundsArray)]);
-      let visiblePolyCentroids = turfWithin(centroidsOfFeatures,turfBBoxPoly);
-
-      this.setState({
-        featureCount: visiblePolyCentroids.features.length,
-        featureCountTotal: centroidsOfFeatures.features.length
-      });
-    });
-
-
+    map.on('move', this.onMoveMap);
 
     var info = L.control({position: 'bottomleft'});
 
@@ -423,7 +406,6 @@ var MapWidget = React.createClass({
     info.update = function (props) {
         this._div.innerHTML = '<h4>DC Properties</h4>'
         + '<img src="assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
-        + '<img src="assets/images/user.png" style="width: 10px; height: 10px"/> Users <br/>'
         + '<img src="assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
         + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
         ;
@@ -495,10 +477,8 @@ var MapWidget = React.createClass({
        mapExtractedGeoJSON: mapGeoJSON,
        mapCentroidsOfFeatures: centroidsOfFeatures
      });
-
-    this.mapUserLayer = omnivore.topojson.parse(this.state.userEditsTopoJSON)
-      .eachLayer(this.onEachLayer)
-      .addTo(map);
+     
+    this.onMoveMap({target: map})
 
   },
 

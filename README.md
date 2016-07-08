@@ -1,25 +1,6 @@
 # GGwash map 1
 
-This repo contains the source code for the map and table widgets.
-
-## Project build
-To compile the assets, you'll need to install the following dependencies on your system:
-
-- Node (v4.2.x) & Npm ([nvm](https://github.com/creationix/nvm) usage is advised)
-
-> The versions mentioned are the ones used during development. It could work with newer ones.
-
-After these basic requirements are met, run the following commands:
-```
-$ npm install
-```
-and to build the project:
-```
-$ npm run build
-```
-
-The final files are placed in a directory called `dist`.  
-Copy the files from the following directories to the root of your website:
+Copy the files from the following directories to the root of your website or to link them on my domain:
 ```
 - assets/scripts
 - assets/styles

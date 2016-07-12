@@ -405,8 +405,8 @@ var MapWidget = React.createClass({
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
         this._div.innerHTML = '<h4>DC Properties</h4>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/blob/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/blob/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
         + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
         ;
     };
@@ -451,7 +451,7 @@ var MapWidget = React.createClass({
       text:'Color...',
       markerLocation: true,
       circleLocation: false,
-      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/app/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
+      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/master/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );
 
     this.wardBoundaryLayer = omnivore.topojson.parse(this.state.wardBoundaryTopoJSON)

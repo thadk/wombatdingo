@@ -44,22 +44,9 @@ After including the assets, the `OC_MAP` variable is exposed and with it functio
 ```
 The map widget gets initialized in the element with class `.oc-map--map-widget`
 
-### Table widget example
-```html
-<div class="oc-map--table-widget"><!-- Widget renders here --></div>
-<script>
-  OC_MAP.initTableWidget(document.querySelector('.oc-map--table-widget'));
-</script>
-```
-The table widget gets initialized in the element with class `.oc-map--table-widget`
-
 ## API Reference
 - `OC_MAP.initMapWidget(node)`:
   Initializes the map widget injecting the code in the given node.
-  - `node` - A HTML node
-
-- `OC_MAP.initTableWidget(node)`:
-  Initializes the table widget injecting the code in the given node.
   - `node` - A HTML node
 
 ## Development commands

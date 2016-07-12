@@ -15,9 +15,9 @@ import turfWithin from 'turf-within';
 import turfFeaturecollection from 'turf-featurecollection';
 
 const godiScores = 'http://index.okfn.org/api/entries.json';
-const mapTopoJSON = 'assets/topojson/owners-wBlighted-target-only.json';
-const dcBoundaryTopoJSON = 'assets/topojson/DC_Boundary_Lines.json';
-const wardBoundaryTopoJSON = 'assets/topojson/DC_Ward_Boundary_Lines.json';
+const mapTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/owners-wBlighted-target-only.json';
+const dcBoundaryTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/DC_Boundary_Lines.json';
+const wardBoundaryTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/DC_Ward_Boundary_Lines.json';
 const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
 // const mapTopoSW = '/assets/topojson/quads/other/owners-wBlighted-SW.json';
 // const mapTopoSE = '/assets/topojson/quads/other/owners-wBlighted-SE.json';
@@ -405,9 +405,9 @@ var MapWidget = React.createClass({
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
         this._div.innerHTML = '<h4>DC Properties</h4>'
-        + '<img src="assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
-        + '<img src="assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
-        + '<img src="assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/blob/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/blob/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
         ;
     };
 
@@ -451,7 +451,7 @@ var MapWidget = React.createClass({
       text:'Color...',
       markerLocation: true,
       circleLocation: false,
-      markerIcon: new L.Icon({iconUrl:'assets/images/marker-icon-highlight.png', iconSize: [25,41]})
+      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/app/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );
 
     this.wardBoundaryLayer = omnivore.topojson.parse(this.state.wardBoundaryTopoJSON)
@@ -477,7 +477,7 @@ var MapWidget = React.createClass({
        mapExtractedGeoJSON: mapGeoJSON,
        mapCentroidsOfFeatures: centroidsOfFeatures
      });
-     
+
     this.onMoveMap({target: map})
 
   },

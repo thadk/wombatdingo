@@ -48,4 +48,20 @@
 /* Leaflet search widget */
 @import "leaflet-search.min.css";
 
+.leaflet-control-search {
+  width: 200px !important;
+}
+
+.leaflet-control-search input  {
+  min-width: 78px !important;
+  max-width: 170px !important;
+}
+.leaflet-control-search .search-tooltip {
+  margin-top: 1px;
+  min-width: 200px;
+}
+.leaflet-control-search .search-tip {
+  padding: 7px;
+}
+
 @import "ocp.css";

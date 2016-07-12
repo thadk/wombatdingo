@@ -448,8 +448,13 @@ var MapWidget = React.createClass({
 
     map.addControl( new L.Control.Search({
       sourceData: searchByAjax,
-      text:'Color...',
+      text:'Find an address...',
+      autoType: true,
+      autoResize: false,
+      minLength: 4,
+      textErr: "Try another address",
       markerLocation: true,
+      collapsed: false,
       circleLocation: false,
       markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );

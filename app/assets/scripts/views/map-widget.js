@@ -547,6 +547,7 @@ var MapWidget = React.createClass({
     }
 
     statusList.push(<li key="addy">Address: {plot.PREMISEADD}</li>);
+    statusList.push(<li key="addy-link"><a target="_new" href={'https://www.google.com/maps/place/'+plot.PREMISEADD+', DC'}><button>View on Google Maps</button></a></li>);
 
     return <div><h3>Vacant/Blighted Property</h3>
     <ul>

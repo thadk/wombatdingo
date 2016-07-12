@@ -451,7 +451,7 @@ var MapWidget = React.createClass({
       text:'Color...',
       markerLocation: true,
       circleLocation: false,
-      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/master/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
+      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
     }) );
 
     this.wardBoundaryLayer = omnivore.topojson.parse(this.state.wardBoundaryTopoJSON)

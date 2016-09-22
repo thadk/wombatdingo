@@ -14,10 +14,10 @@ import turfCentroid from 'turf-centroid';
 import turfWithin from 'turf-within';
 import turfFeaturecollection from 'turf-featurecollection';
 
-const mapTopoJSON = 'https://raw.githubusercontent.com/thadk/ghMapEmbed/master/data/topojson/buildings_polygons_1pt5pc_preventshaperm.json';
+const mapTopoJSON = 'https://raw.githubusercontent.com/thadk/wombatdingo/master/data/topojson/buildings_polygons.json';
 
 const viewFilterMatrix = {
-  all: 'See Buildings ˃˃'
+  all: 'See Buildings: Mapping for Resilience: Quelimane, MZ ˃˃'
 };
 
   /* GGWASH colors:
@@ -206,28 +206,28 @@ var MapWidget = React.createClass({
     }
 
     // Invalid.
-    if (!layer.feature.properties.GGStatus) {
+    if (!layer.feature.properties.building) {
       layer.setStyle(this.layerStyles.active);
       return;
     }
 
     // // Blighted (or both)
-    // if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
-    //   layer.setStyle(this.layerStyles.blighted);
-    //   return;
-    // }
+    if (layer.feature.properties.building !== "yes") {
+      layer.setStyle(this.layerStyles.blighted);
+      return;
+    }
     //
     // // Vacant
-    // if (layer.feature.properties.GGStatus === 5) {
+    // if (layer.feature.properties.building === "residential") {
     //   layer.setStyle(this.layerStyles.vacant);
     //   return;
     // }
     //
-    // // User generated vacant
-    // if (layer.feature.properties.GGStatus === 9) {
-    //   layer.setStyle(this.layerStyles.userVacant);
-    //   return;
-    // }
+    // User generated vacant
+    if (layer.feature.properties.building) {
+      layer.setStyle(this.layerStyles.vacant);
+      return;
+    }
 
     // Default style.
     layer.setStyle(this.layerStyles.default);
@@ -262,7 +262,7 @@ var MapWidget = React.createClass({
 
     layer
       .on('click', e => {
-        if (!layer.feature.properties.GGStatus) {
+        if (layer.feature.properties.building === "yes") {
           return;
         }
         this.setState({
@@ -270,7 +270,7 @@ var MapWidget = React.createClass({
         });
       })
       .on('mousemove', e => {
-        if (!layer.feature.properties.GGStatus) {
+        if (layer.feature.properties.building === "yes") {
           return;
         }
         // Don't act on the selected layer.
@@ -279,7 +279,7 @@ var MapWidget = React.createClass({
         }
       })
       .on('mouseout', e => {
-        if (!layer.feature.properties.GGStatus) {
+        if (layer.feature.properties.building === "yes") {
           return;
         }
         // Don't act on the selected layer.
@@ -303,7 +303,7 @@ var MapWidget = React.createClass({
   },
 
   setupMap: function () {
-    var map = L.map(this.refs.mapHolder).setView([ 38.9072,-77.0069], 13);
+    var map = L.map(this.refs.mapHolder).setView([ -17.86,36.90], 16);
     var layer = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
       attribution: '<a href="https://www.mapzen.com/rights">Attribution.</a>. Data &copy;<a href="https://openstreetmap.org/copyright">OSM</a> contributors.'
     });
@@ -323,8 +323,8 @@ var MapWidget = React.createClass({
     info.update = function (props) {
         this._div.innerHTML = '<h4>Buildings</h4>'
         // + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> Annotated <br/>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> Regular'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> Only basics<br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> Extra information '
         ;
     };
 
@@ -350,6 +350,20 @@ var MapWidget = React.createClass({
     this.onMoveMap({target: map})
 
   },
+
+  renderGGWash: function (plot) {
+
+  var statusList = [];
+
+  statusList.push(<li key="addy">Extra information: {plot.building}</li>);
+
+  return <div><h3>Address</h3>
+  <ul>
+    {statusList}
+  </ul>
+  </div>;
+},
+
 
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {

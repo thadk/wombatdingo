@@ -14,26 +14,10 @@ import turfCentroid from 'turf-centroid';
 import turfWithin from 'turf-within';
 import turfFeaturecollection from 'turf-featurecollection';
 
-const godiScores = 'http://index.okfn.org/api/entries.json';
-const mapTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/owners-wBlighted-target-only.json';
-const dcBoundaryTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/DC_Boundary_Lines.json';
-const wardBoundaryTopoJSON = 'https://raw.githubusercontent.com/thadk/oc-map/master/data/topojson/DC_Ward_Boundary_Lines.json';
-const geocodeEndpoint = 'http://ggwash-forms.herokuapp.com/geocode'
-// const mapTopoSW = '/assets/topojson/quads/other/owners-wBlighted-SW.json';
-// const mapTopoSE = '/assets/topojson/quads/other/owners-wBlighted-SE.json';
-// const mapTopoNE = '/assets/topojson/quads/other/owners-wBlighted-NE.json';
-// const mapTopoNW = '/assets/topojson/quads/other/owners-wBlighted-NW.json';
-//const mapTopoJSON = 'https://raw.githubusercontent.com/open-contracting-partnership/ocp-data/publish/oc-status/_map.json';
-const godiSlugs = 'http://index.okfn.org/api/places.json';
+const mapTopoJSON = 'https://raw.githubusercontent.com/thadk/ghMapEmbed/master/data/topojson/buildings_polygons_1pt5pc_preventshaperm.json';
 
 const viewFilterMatrix = {
-  all: 'See Properties ˃˃'
-};
-
-const ocdsMatrix = {
-  ocds_implementation: 'in implementation',
-  ocds_historic_data: 'historic data',
-  ocds_ongoing_data: 'ongoing data'
+  all: 'See Buildings ˃˃'
 };
 
   /* GGWASH colors:
@@ -152,16 +136,8 @@ var MapWidget = React.createClass({
       mapTopoJSON: null,
       mapExtractedGeoJSON: null,
       mapCentroidsOfFeatures: null,
-      dcBoundaryTopoJSON: null,
-      mapTopoSW: null,
-      mapTopoSE: null,
-      mapTopoNW: null,
-      mapTopoNE: null,
-      godiScores: null,
-      godiData: null,
-      godiPlaces: null,
-      featureCount: 801,
-      featureCountTotal: 1212,
+      featureCount: 2801,
+      featureCountTotal: 3212,
       activeCountryProperties: null,
       viewFilter: 'all'
     };
@@ -179,73 +155,14 @@ var MapWidget = React.createClass({
         return response.json();
       }),
 
-      fetch(dcBoundaryTopoJSON)
-      .then(response => {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
-      }),
-
-      fetch(wardBoundaryTopoJSON)
-      .then(response => {
-        if (response.status >= 400) {
-          throw new Error('Bad response');
-        }
-        return response.json();
-      })
-
-      // fetch(mapTopoSE)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // }),
-      //
-      // fetch(mapTopoNW)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // }),
-      //
-      // fetch(mapTopoNE)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // }),
-
-      // fetch(godiScores)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // }),
-      //
-      // fetch(godiSlugs)
-      // .then(response => {
-      //   if (response.status >= 400) {
-      //     throw new Error('Bad response');
-      //   }
-      //   return response.json();
-      // })
     ])
     .then(data => {
       let coreData = data[0];
-      let dcBoundLines = data[1];
-      let wardBoundLines = data[2];
 
       this.setState({
         fetchingData: false,
         fetchedData: true,
-        mapTopoJSON: coreData,
-        dcBoundaryTopoJSON: dcBoundLines,
-        wardBoundaryTopoJSON: wardBoundLines
+        mapTopoJSON: coreData
       });
       this.setupMap();
     });
@@ -294,23 +211,23 @@ var MapWidget = React.createClass({
       return;
     }
 
-    // Blighted (or both)
-    if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
-      layer.setStyle(this.layerStyles.blighted);
-      return;
-    }
-
-    // Vacant
-    if (layer.feature.properties.GGStatus === 5) {
-      layer.setStyle(this.layerStyles.vacant);
-      return;
-    }
-
-    // User generated vacant
-    if (layer.feature.properties.GGStatus === 9) {
-      layer.setStyle(this.layerStyles.userVacant);
-      return;
-    }
+    // // Blighted (or both)
+    // if (layer.feature.properties.GGStatus % 7 === 0 || layer.feature.properties.GGStatus === 12) {
+    //   layer.setStyle(this.layerStyles.blighted);
+    //   return;
+    // }
+    //
+    // // Vacant
+    // if (layer.feature.properties.GGStatus === 5) {
+    //   layer.setStyle(this.layerStyles.vacant);
+    //   return;
+    // }
+    //
+    // // User generated vacant
+    // if (layer.feature.properties.GGStatus === 9) {
+    //   layer.setStyle(this.layerStyles.userVacant);
+    //   return;
+    // }
 
     // Default style.
     layer.setStyle(this.layerStyles.default);
@@ -404,68 +321,15 @@ var MapWidget = React.createClass({
 
     // method that we will use to update the control based on feature properties passed
     info.update = function (props) {
-        this._div.innerHTML = '<h4>DC Properties</h4>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> DC Vacant <br/>'
-        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> DC Blighted'
+        this._div.innerHTML = '<h4>Buildings</h4>'
+        // + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/ward.png" style="width: 10px; height: 10px"/> Ward boundary <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/vacant.png" style="width: 10px; height: 10px"/> Annotated <br/>'
+        + '<img src="https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/blighted.png" style="width: 10px; height: 10px"/> Regular'
         ;
     };
 
 
     info.addTo(map);
-
-    function searchByAjax(text, callResponse)//callback for 3rd party ajax requests
-    {
-
-      return Promise.all([
-        fetch(geocodeEndpoint,{
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            str: text,
-            f: 'json',
-          })
-        })
-        .then(response => {
-          if (response.status >= 400) {
-            throw new Error('Bad response');
-          }
-          return response.json();
-        })
-      ])
-      .then(data => {
-        let passThrough = [];
-        if (data[0].returnDataset && data[0].returnDataset.Table1) {
-          passThrough = data[0].returnDataset.Table1.map(n => ({loc: [n.LATITUDE,n.LONGITUDE], title: n.FULLADDRESS, SSL: n.SSL}) )
-        }
-        callResponse(passThrough);
-      });
-
-    }
-
-    map.addControl( new L.Control.Search({
-      sourceData: searchByAjax,
-      text:'Find an address...',
-      autoType: true,
-      autoResize: false,
-      minLength: 4,
-      textErr: "Try another address",
-      markerLocation: true,
-      collapsed: false,
-      circleLocation: false,
-      markerIcon: new L.Icon({iconUrl:'https://raw.githubusercontent.com/thadk/oc-map/master/app/assets/images/marker-icon-highlight.png', iconSize: [25,41]})
-    }) );
-
-    this.wardBoundaryLayer = omnivore.topojson.parse(this.state.wardBoundaryTopoJSON)
-      .eachLayer(this.onEachLayer)
-      .addTo(map);
-
-    this.dcBoundaryLayer = omnivore.topojson.parse(this.state.dcBoundaryTopoJSON)
-      .eachLayer(this.onEachLayer)
-      .addTo(map);
 
     this.mapCountryLayer = omnivore.topojson.parse(this.state.mapTopoJSON)
       .eachLayer(this.onEachLayer)
@@ -486,99 +350,6 @@ var MapWidget = React.createClass({
     this.onMoveMap({target: map})
 
   },
-
-  // renderGodi: function (country) {
-  //   let godi = this.state.godiData;
-  //   let countryGodi = null;
-  //   let godiPlaces = this.state.godiPlaces;
-  //   let countryMeta = null;
-  //
-  //   countryGodi = _.find(godi, {'place': country.iso_a2.toLowerCase(), 'dataset': 'procurement'});
-  //   countryMeta = _.find(godiPlaces, {'id': country.iso_a2.toLowerCase()});
-  //
-  //   if (!countryGodi || !countryMeta) {
-  //     return;
-  //   }
-  //   return <p className='godi'>Transparency of Tenders & Awards: <a href={'http://index.okfn.org/place/' + countryMeta.slug} target='_blank'>{countryGodi.score}%</a></p>;
-  // },
-
-  // renderPublisher: function (publishers) {
-  //   if (!publishers.length) {
-  //     return <div><h3>Publishing open contracting data</h3><p>No entity publishing data yet</p></div>;
-  //   }
-  //
-  //   let content = _.map(publishers, (o, i) => {
-  //     var status = [];
-  //     _.forEach(ocdsMatrix, (str, idx) => {
-  //       if (o[idx]) { status.push(str); }
-  //     });
-  //     var statusStr = status.join(', ');
-  //     return (
-  //       <li key={i}><a href={o.publisher_link} target='_blank'>{o.publisher}</a>:
-  //         {statusStr ? <span> {statusStr}</span> : null}
-  //       </li>
-  //     );
-  //   });
-  //   return <div><h3>Publishing open contracting data</h3><ul>{content}</ul></div>;
-  // },
-  //
-  // renderInnovations: function (innovations) {
-  //   if (!innovations.length) {
-  //     return;
-  //   }
-  //
-  //   let content = _.map(innovations, (o, i) => {
-  //     return (
-  //       <li key={i}><a href={o.innovation_link} target='_blank'>{o.innovation_description}</a></li>
-  //     );
-  //   });
-  //
-  //   return <div><h3>Innovations in contract monitoring and data use</h3><ul>{content}</ul></div>;
-  // },
-  renderGGWash: function (plot) {
-
-    var statusList = [];
-    if (plot.GGStatus % 5 === 0 || plot.GGStatus === 12 ) {
-      var vacant = 'Was marked as Vacant by DC in late 2015';
-      statusList.push(<li key="vacant">{vacant}</li>);
-    } else if (plot.GGStatus % 7 === 0 ) {
-      var blighted = 'Was marked as Blighted by DC in late 2015';
-      statusList.push(<li key="blighted">{blighted}</li>);
-    }
-
-    statusList.push(<li key="addy">Address: {plot.PREMISEADD}</li>);
-    statusList.push(<li key="addy-link"><a target="_new" href={'https://www.google.com/maps/place/'+plot.PREMISEADD+', DC'}><button>View on Google Maps</button></a></li>);
-
-    return <div><h3>Vacant/Blighted Property</h3>
-    <ul>
-      {statusList}
-    </ul>
-    </div>;
-  },
-
-
-  // renderCommitments: function (country) {
-  //   if (!(country.ogp_commitments.length) && (!(country.commitment_oil_mining) || country.commitment_oil_mining === 'none')) {
-  //     return;
-  //   }
-  //
-  //   let content_ogp = _.map(country.ogp_commitments, (o, i) => {
-  //     return (
-  //       <li key={i}>OGP: <a href={o.ogp_commitment_link} target='_blank'>{o.ogp_commitment}</a></li>
-  //     );
-  //   });
-  //
-  //   let content;
-  //   if (country.commitment_oil_mining) {
-  //     if (country.commitment_oil_mining) {
-  //       content = <li>Oil and Mining: <a href={country.commitment_oil_mining_link} target='_blank'>{country.commitment_oil_mining}</a></li>;
-  //     } else {
-  //       content = <li>Oil and Mining: {country.commitment_oil_mining}</li>;
-  //     }
-  //   }
-  //
-  //   return <div><h3>Commitments</h3><ul>{content_ogp}{content}</ul></div>;
-  // },
 
   render: function () {
     if (!this.state.fetchedData && !this.state.fetchingData) {
